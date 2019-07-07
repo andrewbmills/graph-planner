@@ -1,0 +1,15 @@
+<launch>
+  <node pkg="graph-planner" type="centering_ground.py" name="centering" output="screen">
+    <!-- Inputs (Subscribed Topic Names) -->
+    <remap from="points" to="/X1/points_filtered"/>
+
+    <!-- Outputs (Published Topic Names) -->
+    <remap from="cmd_vel" to="/X1/cmd_vel"/>
+
+    <!-- Parameters -->
+    <param name="speed" value="0.8"/>
+    <param name="rate" value="10.0"/>
+    <param name="yaw_rate_max" value="0.2"/>
+    <param name="plot" value="1"/>
+  </node>
+</launch>

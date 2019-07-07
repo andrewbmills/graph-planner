@@ -1,0 +1,42 @@
+<launch>
+  <!-- <node pkg="rosbag" type="play" name="bag_player" args="~/Downloads/Junction_Finding_Bags/heidi-6-26-19/test3_downback_wfi_map.bag"/> -->
+
+  <!-- Map to Graph Node -->
+  <node pkg="graph-planner" type="map2graph.py" name="map2graph" output="screen">
+    <!-- Inputs (Subscribed Topic Names) -->
+    <remap from="odometry" to="/jackal_odom"/>
+    <remap from="pointcloud" to="/octomap_point_cloud_centers_free"/>
+    <!-- <remap from="odometry" to="/X1/odometry"/> -->
+    <!-- <remap from="pointcloud" to="/X1/voxblox_node/esdf_pointcloud"/> -->
+
+    <!-- Outputs (Published Topic Names) -->
+    <!-- <remap from="node_skeleton/closest_node" to="/X1/node_skeleton/closest_node"/>
+    <remap from="node_skeleton/closest_edges" to="/X1/node_skeleton/closest_edges"/>
+    <remap from="node_skeleton/closest_node_poses" to="/X1/node_skeleton/closest_node_poses"/> -->
+
+    <!-- Parameters -->
+    <param name="resolution" value="0.1"/>
+    <param name="mapType" value="Octomap"/>
+  </node>
+
+<!--   <node pkg="graph-planner" type="centering_ground.py" name="centering" output="screen">
+    <remap from="points" to="/X1/points_filtered"/>
+
+    <remap from="cmd_vel" to="/X1/cmd_vel"/>
+
+    <param name="speed" value="0.8"/>
+    <param name="rate" value="10.0"/>
+    <param name="yaw_rate_max" value="0.2"/>
+    <param name="plot" value="0"/>
+  </node> -->
+
+  <!-- Graph construction node -->
+  <node name="gbm_node" pkg="gbm_pkg" type="gbm_node"  output="screen">
+    <!-- <remap from="odometry" to="/X1/odometry"/> -->
+    <remap from="odometry" to="/jackal_odom"/>
+    <remap from="closest_node" to="/node_skeleton/closest_node"/>
+    <remap from="edge_list" to="/node_skeleton/closest_edges"/>
+    <remap from="graph" to="/node_skeleton/graph"/>
+  </node>
+
+</launch>
