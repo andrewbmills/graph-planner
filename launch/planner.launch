@@ -17,6 +17,11 @@
     <!-- Parameters -->
     <param name="resolution" value="0.1"/>
     <param name="mapType" value="Octomap"/>
+    <param name="num_slices" value="10"/>
+    <param name="plotting" value="1"/>
+    <param name="plot_steps" value="0"/>
+    <!-- <param name="map_blur" value="5.0"/> -->
+    <!-- <param name="map_thresh" value="0.4"/> -->
   </node>
 
 <!--   <node pkg="graph-planner" type="centering_ground.py" name="centering" output="screen">

@@ -15,7 +15,7 @@ import sensor_msgs.point_cloud2 as pc2
 # My own wrapped thinning function
 import sys
 # sys.path.insert(0, '../include/')
-# import thin_ext as thin
+# import thin_ext as cppthin
 from skimage.morphology import skeletonize, thin
 # image convolution library
 from scipy import ndimage
@@ -52,7 +52,8 @@ class node_skeleton:
 
 	def getPosition(self, data):
 		self.position = data.pose.pose.position
-		self.position.z = self.position.z + 1.0*self.voxel_size
+		self.position.z = self.position.z  #+ 1.0*self.voxel_size
+		self.position_get_first = True
 		return
 
 	def getCloud(self, data): # PC2 Subscriber
@@ -221,20 +222,20 @@ class node_skeleton:
 			# Find the x and y extrema
 			x_min = np.amin(points[:,0])
 			x_max = np.amax(points[:,0])
-			x_size = np.round((x_max - x_min)/self.voxel_size) + 1
+			x_size = int(np.round((x_max - x_min)/self.voxel_size)) + 1 + 2*self.img_pad
 			y_min = np.amin(points[:,1])
 			y_max = np.amax(points[:,1])
-			y_size = np.round((y_max - y_min)/self.voxel_size) + 1
+			y_size = int(np.round((y_max - y_min)/self.voxel_size)) + 1 + 2*self.img_pad
 
 			# Restrict points to just the z_slice neighborhood
-			slice_indices = np.logical_and(np.less(points[:,2], self.position.z + self.voxel_size/2.0), np.greater(points[:,2], self.position.z - self.voxel_size/2.0))
+			slice_indices = np.logical_and(np.less(points[:,2], self.position.z + self.num_slices*self.voxel_size/2.0), np.greater(points[:,2], self.num_slices*self.position.z - self.voxel_size/2.0))
 			points = points[slice_indices,:]
 
 			# Write the slice to an image
 			img = np.zeros(shape=[int(x_size), int(y_size)])
 			for p in points:
-				x_idx = int(round((p[0] - x_min)/self.voxel_size))
-				y_idx = int(round((p[1] - y_min)/self.voxel_size))
+				x_idx = int(np.round((p[0] - x_min)/self.voxel_size)) + self.img_pad
+				y_idx = int(np.round((p[1] - y_min)/self.voxel_size)) + self.img_pad
 				if (self.mapType == "Octomap"):
 					img[x_idx, y_idx] = 1
 				if (self.mapType == "Voxblox"):
@@ -255,35 +256,32 @@ class node_skeleton:
 			plt.ion()
 			plt.show()
 
-			# plt.imshow(np.less(img, self.thresh_Occ), cmap=plt.cm.gray, interpolation='nearest')
-			# plt.draw()
-			# plt.pause(0.5)
+			if (self.plot_on and self.plot_steps):
+				plt.imshow(np.less(img, self.thresh), cmap=plt.cm.gray, interpolation='nearest')
+				plt.draw()
+				plt.pause(0.25)
+
+				plt.imshow(occGrid, cmap=plt.cm.gray, interpolation='nearest')
+				plt.draw()
+				plt.pause(0.25)
 
 			# plt.imshow(occGrid, cmap=plt.cm.gray, interpolation='nearest')
 			# plt.draw()
-			# plt.pause(0.5)
 
-			# plt.imshow(occGrid, cmap=plt.cm.gray, interpolation='nearest')
-			# plt.draw()
-
-			# Call thinning c++ function
+			# Call thinning c++ function library
 			# Convert the occGrid image into a flattened image of type float
 			# occGrid_img = occGrid.astype(float)
 			# occGrid_img_list = list(occGrid_img.flatten())
-			rows, cols = np.shape(occGrid)
-			# skel = thin.voronoi_thin(occGrid_img_list, rows, cols, self.thinning_type)
+			# rows, cols = np.shape(occGrid)
+			# skel = cppthin.voronoi_thin(occGrid_img_list, rows, cols, self.thinning_type)
 			# skel = np.array(skel)
 			# skel = skel.reshape((rows, cols))
 			# skel = np.less(skel, 0.5)
-			# skel = skel.astype(np.uint16)
 
+			# Python's skimage library
 			# skel = skeletonize(~occGrid)
 			skel = thin(~occGrid)
 			skel = skel.astype(np.uint16)
-
-			plt.imshow(occGrid + skel, cmap=plt.cm.gray, interpolation='nearest')
-			# plt.draw()
-			# plt.pause(0.5)
 
 			nodes, nodes_end, edges = self.skel2Graph(skel)
 
@@ -293,30 +291,39 @@ class node_skeleton:
 			plt.plot(nodes_end[:,1], nodes_end[:,0], 'go', markersize=15, markerfacecolor='none')
 			plt.title('map2graph')
 
-			# # Plot node number labels
-			if len(nodes):
-				nodes_all = np.vstack((nodes, nodes_end))
-				plt.plot(nodes[:,1], nodes[:,0], 'ro', markersize=15, markerfacecolor='none')
-			else:
-				nodes_all = nodes_end
-			node_label = 0
-			for n in nodes_all:
-				plt.text(n[1]-5, n[0]-5, str(node_label), fontsize=12)
-				node_label = node_label + 1
+			# Plot node number labels
+			if (self.plot_on):
+				plt.imshow(occGrid + skel, cmap=plt.cm.gray, interpolation='nearest')
+				if len(nodes):
+					nodes_all = np.vstack((nodes, nodes_end))
+					plt.plot(nodes[:,1], nodes[:,0], 'ro', markersize=15, markerfacecolor='none')
+				else:
+					nodes_all = nodes_end
+				node_label = 0
+				for n in nodes_all:
+					plt.text(n[1]-5, n[0]-5, str(node_label), fontsize=12)
+					node_label = node_label + 1
+				plt.draw()
 
-			plt.draw()
-			plt.pause(0.001)
+			if (self.plot_on and not self.plot_steps):
+				plt.pause(0.001)
+			if (self.plot_on and self.plot_steps):
+				plt.pause(0.25)
 
 			# Calculate published topics
-			# Closest node pointstamped
 			num_nodes, _ = np.shape(nodes_all)
-			x_ind = int(round((self.position.x - x_min)/self.voxel_size))
-			y_ind = int(round((self.position.y - y_min)/self.voxel_size))
+
+			if (num_nodes < 1):
+				# Don't need to find the closest node if there are none
+				return
+
+			x_ind = int(round((self.position.x - x_min)/self.voxel_size)) + self.img_pad
+			y_ind = int(round((self.position.y - y_min)/self.voxel_size)) + self.img_pad
 			dist = np.linalg.norm(nodes_all - np.tile(np.array([x_ind, y_ind]), [num_nodes, 1]), axis=1)
 			# print(dist)
 			closest_node_id = np.argmin(dist)
-			self.closest_node.point.x = (nodes_all[closest_node_id,0])*self.voxel_size + x_min
-			self.closest_node.point.y = (nodes_all[closest_node_id,1])*self.voxel_size + y_min
+			self.closest_node.point.x = (nodes_all[closest_node_id,0] - self.img_pad)*self.voxel_size + x_min
+			self.closest_node.point.y = (nodes_all[closest_node_id,1] - self.img_pad)*self.voxel_size + y_min
 			self.closest_node.point.z = self.position.z
 			# print(self.closest_node)
 
@@ -336,8 +343,8 @@ class node_skeleton:
 					angle = np.arctan2(y_end - nodes_all[closest_node_id,1], x_end - nodes_all[closest_node_id,0])
 					edge_angles.append(angle)
 					new_pose = Pose()
-					new_pose.position.x = nodes_all[closest_node_id,0]*self.voxel_size + x_min
-					new_pose.position.y = nodes_all[closest_node_id,1]*self.voxel_size + y_min
+					new_pose.position.x = (nodes_all[closest_node_id,0] - self.img_pad)*self.voxel_size + x_min
+					new_pose.position.y = (nodes_all[closest_node_id,1] - self.img_pad)*self.voxel_size + y_min
 					new_pose.position.z = self.position.z
 					q = euler2quaternion(np.array([angle, 0, 0]))
 					new_pose.orientation.w = q[0]
@@ -352,8 +359,6 @@ class node_skeleton:
 			dim.label = "edge_angles"
 			dim.stride = int(32)
 			self.edge_list.layout.dim[0] = dim
-			# print(self.edge_list)
-			# print(self.edge_poses)
 		return
 
 	def __init__(self):
@@ -366,10 +371,16 @@ class node_skeleton:
 		# self.mapType = "Voxblox"
 		self.mapType = str(rospy.get_param("/map2graph/mapType", "Voxblox"))
 		self.voxel_size = float(rospy.get_param("/map2graph/resolution", 0.2))
+		self.num_slices = int(rospy.get_param("/map2graph/num_slices", 1))
+		self.plot_on = bool(rospy.get_param("/map2graph/plotting", True))
+		self.plot_steps = bool(rospy.get_param("/map2graph/plot_steps", False))
+		map_blur = float(rospy.get_param("/map2graph/map_blur", 5.0))
+		map_thresh = float(rospy.get_param("/map2graph/map_threshold", 0.4))
 
 		# Subscribers
 		# rospy.Subscriber('X1/odometry', Odometry, self.getPosition)
 		rospy.Subscriber('/odometry', Odometry, self.getPosition)
+		self.position_get_first = False
 		# rospy.Subscriber('X1/voxblox_node/esdf_pointcloud', PointCloud2, self.getCloud)
 		rospy.Subscriber('/pointcloud', PointCloud2, self.getCloud)
 		self.cloud_get = False
@@ -384,7 +395,11 @@ class node_skeleton:
 		pubTopic = 'node_skeleton/closest_edges'
 		self.pub_closest_edges = rospy.Publisher(pubTopic, Float32MultiArray, queue_size=10)
 		self.edge_list = Float32MultiArray()
-		self.edge_list.layout.dim.append(0)
+		dim = MultiArrayDimension()
+		dim.size = 0
+		dim.label = "edge_angles"
+		dim.stride = int(32)
+		self.edge_list.layout.dim.append(dim)
 
 		pubTopic = 'node_skeleton/closest_node_poses'
 		self.pub_edge_poses = rospy.Publisher(pubTopic, PoseArray, queue_size=10)
@@ -396,13 +411,13 @@ class node_skeleton:
 
 		# Gaussian Blur and Thresholding params
 		if self.mapType == "Voxblox":
-			self.blur_sigma = 5.0 # Works well with 0.4 ESDF threshold
+			self.blur_sigma = map_blur # Works well with 0.4 ESDF threshold
 			self.blur_size = int(2*np.ceil(2*self.blur_sigma) + 1) # Matlab imgaussfilt default
-			self.thresh = 0.4
+			self.thresh = map_thresh
 		else:
-			self.blur_sigma = 10.0 # Works well with 0.4 for OccGrid threshold
-			self.blur_size = int(2*np.ceil(2*self.blur_sigma_Occ) + 1) # Matlab imgaussfilt default
-			self.thresh = 0.4 # log-odds thresh
+			self.blur_sigma = map_blur*2.0 # Works well with 0.4 for OccGrid threshold
+			self.blur_size = int(2*np.ceil(2*self.blur_sigma) + 1) # Matlab imgaussfilt default
+			self.thresh = map_thresh # log-odds thresh
 
 
 		# Thinning and graph params
@@ -411,13 +426,20 @@ class node_skeleton:
 		# self.thinning_type = "zhang_suen_fast"
 		# self.thinning_type = "morph"
 
+		self.img_pad = 2 # pad the img with occupied cells for neighborhood operations
+
 	def start(self):
 		rate = rospy.Rate(self.rate)
 		while not rospy.is_shutdown():
 			rate.sleep()
 			# self.getTransform()
-			if (self.cloud_get_first):
+			if (self.cloud_get_first and self.position_get_first):
 				self.cloud2img()
+			else:
+				if (self.cloud_get_first == False):
+					rospy.loginfo("map2graph - Waiting for map Pointcloud2 message")
+				if (self.position_get_first == False):
+					rospy.loginfo("map2graph - Waiting for odometry message")
 
 			self.pub_closest_node.publish(self.closest_node)
 			self.pub_closest_edges.publish(self.edge_list)
