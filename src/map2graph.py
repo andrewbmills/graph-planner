@@ -52,7 +52,7 @@ class node_skeleton:
 
 	def getPosition(self, data):
 		self.position = data.pose.pose.position
-		self.position.z = self.position.z  #+ 1.0*self.voxel_size
+		self.position.z = self.position.z  + 1.0*self.voxel_size
 		self.position_get_first = True
 		return
 
@@ -107,19 +107,19 @@ class node_skeleton:
 		for n in nodes:
 			# Find the closest connected edge pixels to the node
 			node = np.array([int(round(n[0])), int(round(n[1]))])
-			neighborhood = skel_conv[(node[0]-2):(node[0]+3), (node[1]-2):(node[1]+3)] # 5x5 in the neighborhood of node
+			neighborhood = skel_conv[(node[0]-4):(node[0]+5), (node[1]-4):(node[1]+5)] # 9x9 in the neighborhood of node
 			neigh_rows, neigh_cols = np.shape(neighborhood)
-			if not (neigh_rows == 5) or not (neigh_cols == 5):
+			if not (neigh_rows == 9) or not (neigh_cols == 9):
 				continue
 			edge_starts = []
 			edge_paths = []
 			neighbors = []
-			for i in range(5):
-				for j in range(5):
+			for i in range(9):
+				for j in range(9):
 					# Check if the neighborhood pixel is an edge
 					if (neighborhood[i,j] == 12):
-						# Check if the edge pixel is adjacent to a node (skel_conv value of 13)
-						local = node + np.array([i-2, j-2])
+						# Check if the edge pixel is adjacent to a node (skel_conv value greater than 12)
+						local = node + np.array([i-4, j-4])
 						local_neighborhood =  skel_conv[(local[0]-1):(local[0]+2), (local[1]-1):(local[1]+2)]
 						# print(local_neighborhood)
 						# print(np.greater(local_neighborhood,13))
@@ -426,7 +426,7 @@ class node_skeleton:
 		# self.thinning_type = "zhang_suen_fast"
 		# self.thinning_type = "morph"
 
-		self.img_pad = 2 # pad the img with occupied cells for neighborhood operations
+		self.img_pad = 4 # pad the img with occupied cells for neighborhood operations
 
 	def start(self):
 		rate = rospy.Rate(self.rate)

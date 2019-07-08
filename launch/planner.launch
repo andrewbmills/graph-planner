@@ -4,24 +4,25 @@
   <!-- Map to Graph Node -->
   <node pkg="graph-planner" type="map2graph.py" name="map2graph" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
-    <remap from="odometry" to="/jackal_odom"/>
-    <remap from="pointcloud" to="/octomap_point_cloud_centers_free"/>
-    <!-- <remap from="odometry" to="/X1/odometry"/> -->
-    <!-- <remap from="pointcloud" to="/X1/voxblox_node/esdf_pointcloud"/> -->
+    <!-- <remap from="odometry" to="/jackal_odom"/> -->
+    <!-- <remap from="pointcloud" to="/octomap_point_cloud_centers_free"/> -->
+    <remap from="odometry" to="/X1/odometry"/>
+    <remap from="pointcloud" to="/X1/voxblox_node/esdf_pointcloud"/>
 
     <!-- Outputs (Published Topic Names) -->
-    <!-- <remap from="node_skeleton/closest_node" to="/X1/node_skeleton/closest_node"/>
-    <remap from="node_skeleton/closest_edges" to="/X1/node_skeleton/closest_edges"/>
-    <remap from="node_skeleton/closest_node_poses" to="/X1/node_skeleton/closest_node_poses"/> -->
+    <!-- <remap from="node_skeleton/closest_node" to="/X1/node_skeleton/closest_node"/> -->
+    <!-- <remap from="node_skeleton/closest_edges" to="/X1/node_skeleton/closest_edges"/> -->
+    <!-- <remap from="node_skeleton/closest_node_poses" to="/X1/node_skeleton/closest_node_poses"/> -->
 
     <!-- Parameters -->
-    <param name="resolution" value="0.1"/>
-    <param name="mapType" value="Octomap"/>
-    <param name="num_slices" value="10"/>
+    <param name="resolution" value="0.4"/>
+    <param name="mapType" value="Voxblox"/>
+    <param name="rate" value="1.0"/>
+    <!-- <param name="num_slices" value="1"/> -->
     <param name="plotting" value="1"/>
     <param name="plot_steps" value="0"/>
     <!-- <param name="map_blur" value="5.0"/> -->
-    <!-- <param name="map_thresh" value="0.4"/> -->
+    <!-- <param name="map_threshold" value="0.4"/> -->
   </node>
 
 <!--   <node pkg="graph-planner" type="centering_ground.py" name="centering" output="screen">
@@ -37,11 +38,16 @@
 
   <!-- Graph construction node -->
   <node name="gbm_node" pkg="gbm_pkg" type="gbm_node"  output="screen">
-    <!-- <remap from="odometry" to="/X1/odometry"/> -->
-    <remap from="odometry" to="/jackal_odom"/>
-    <remap from="closest_node" to="/node_skeleton/closest_node"/>
-    <remap from="edge_list" to="/node_skeleton/closest_edges"/>
-    <remap from="graph" to="/node_skeleton/graph"/>
+    <remap from="odometry" to="/X1/odometry"/>
+    <!-- <remap from="odometry" to="/jackal_odom"/> -->
+    <remap from="closest_node" to="node_skeleton/closest_node"/>
+    <remap from="edge_list" to="node_skeleton/closest_edges"/>
+    <remap from="graph" to="node_skeleton/graph"/>
+
+    <!-- Parameters -->
+    <param name="sRadius" value="3.0"/>
+    <param name="rRadius" value="3.0"/>
+    <param name="eRadius" value="0.4"/>
   </node>
 
 </launch>

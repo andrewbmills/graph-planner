@@ -8,18 +8,47 @@ from nav_msgs.msg import *
 from gbm_pkg.msg import *
 from dijkstra import GraphSolver
 
+def angleDiff(a, b):
+	# Computes a-b, preserving the correct sign (counter-clockwise positive angles)
+	# All angles are in degrees
+	a = (360000 + a) % 360
+	b = (360000 + b) % 360
+	d = a - b
+	d = (d + 180) % 360 - 180
+	return d
+
+def wrapToPi(a):
+	# Wraps an angle to sit on the interval (-pi,pi)
+	a = (a + np.pi) % (2*np.pi) - np.pi
+
 class graph2path:
-	def getPosition(self, data): # Position subscriber callback function
+	def maintainCrumbs(self, new_id):
+		# This function finds the last time the current id occured in the breadcrumb list
+		# Then it shortens the breadcrumb list up to that id so that the robot doesn't waste time going home
+		idx = len(self.breadcrumbs)-1
+		while (not self.breadcrumbs[idx] == new_id):
+			if (idx == 0):
+				self.breadcrumbs.append(new_id)
+				return
+			idx = idx - 1
+		self.breadcrumbs = self.breadcrumbs[:idx+1]
+		return
+
+	def getOdom(self, data): # Odom subscriber callback function
 		self.position = data.pose.pose.position
+		q = Quaternion()
+		q = data.pose.pose.orientation
+		self.yaw = np.arctan2(2.0*(q.w*q.z + q.x*q.y), 1.0 - 2.0*(q.y*q.y + q.z*q.z))
 		return
 
 	def getGraph(self, data): # Graph subscriber callback function
+		self.first_graph_msg = True
 		# Generates an adjacency graph (numpy 2d array) from Graph.msg data
 		n = data.size
 		self.A = np.zeros((n,n,2)) # Adjacency matrix (First nxn is costs and second one is angles)
 		self.unexplored_edges = [] # a (p x e+1) list of unexplored edges.  Column 1 is the node id and columns 2 to e+1 are the edge angles
 		for node in data.node:
-			i = node.id
+			i = int(node.id)
 			for edge_num in range(node.nExploredEdge):
 				j = node.neighborId[edge_num]
 				cost = node.edgeCost[edge_num]
@@ -33,6 +62,22 @@ class graph2path:
 		self.unexplored_edges = np.array(self.unexplored_edges)
 		self.current_node = data.currentNodeId
 		self.current_edge = data.currentEdge
+
+		# The graph current edge message reads -10 if the robot is at a node
+		if (self.current_edge < -5.0) and (n > 1):
+			self.at_a_node.data = True
+		else:
+			self.at_a_node.data = False
+
+		# Add the current node to the history of nodes if it's different than the last added
+		if (self.node_history):
+			if (not self.node_history[-1] == self.current_node):
+				self.node_history.append(self.current_node)
+				# Maintain breadcrumb path back to home
+				self.maintainCrumbs(self.current_node)
+		else:
+			self.node_history.append(self.current_node)
+			self.breadcrumbs.append(self.current_node)
 		return
 
 	def getTask(self, data):
@@ -41,41 +86,134 @@ class graph2path:
 
 	def findPath(self):
 		n = len(self.A)
-		print(self.A[:,:,0])
 		print("current node %d" % (self.current_node))
+		node_list = []
+		turn_list = []
 		if (n>1):
+			print(self.A[:,:,0])
 			g = GraphSolver()
-			g.dijkstra(self.A[:,:,0], self.current_node)
+			parent, dist = g.dijkstra(self.A[:,:,0], self.current_node)
 		else:
 			print("Less than two nodes in the graph.")
+			return [], []
+		# Find the goal id
+		if (self.task == "Home"):
+			# Home node id
+			goal_id = 0
+		else:
+			# Closest node with an unexplored edge
+			# print(self.unexplored_edges)
+			goal_list = np.array(self.unexplored_edges[:,0], dtype=np.int16)
+			# print(goal_list)
+			dist = np.array(dist)
+			# print(dist)
+			destination_edge_idx = np.argmin(dist[goal_list])
+			goal_id = goal_list[destination_edge_idx]
+			# print(dist[goal_list])
+			# print(goal_id)
 
-		return
-		# goalList = []
-		# if self.Task == "Home":
-		# 	goalList.append(0)
-		# if self.Task == "Explore":
-		# 	for goal in self.unexplored_edges:
-		# 		goal_node = goal[0]
-		# 		goal_angle = goal[1]
+		# print(parent)
+		# print(dist)
+		# print(goal_id)
+		# Extract path to goal_id from parent list
+		j = goal_id
+		# print(type(j))
+		node_list.append(j)
+		while (not parent[j] == -1):
+			node_list.insert(0, parent[j])
+			j = parent[j]
 
+		# print(self.unexplored_edges)
+
+
+		if (len(node_list) > 1):
+			turn_list = self.turns(node_list)
+			arriving_angle = wrapToPi(self.A[node_list[-1], node_list[-2], 1] + np.pi)
+			if (self.task == "Home"):
+				# Just go straight when you get home
+				turn_list.append(arriving_angle)
+			else:
+				# Add the turn at the goal node as the minimum turning angle from the arriving yaw
+				delta_min = 361.0
+				for goal_angle in self.unexplored_edges[destination_edge_idx, 1]:
+					delta = np.abs(angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*arriving_angle))
+					if (delta < delta_min):
+						delta_min = delta
+						goal_angle_min = goal_angle
+				turn_list.append(goal_angle_min)
+		else:
+			# If the vehicle is at that node, then proceed.  If not, the turn list should be empty.
+			if (self.at_a_node.data):
+				if (self.task == "Home"):
+					# Just go straight since you're at home
+					turn_list.append(self.yaw)
+				else:
+					# Add the turn at the goal node as the minimum turning angle from the current yaw
+					delta_min = 361.0
+					for goal_angle in self.unexplored_edges[destination_edge_idx, 1]:
+						delta = np.abs(angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*self.yaw))
+						if (delta < delta_min):
+							delta_min = delta
+							goal_angle_min = goal_angle
+					turn_list.append(goal_angle_min)
+
+		print(turn_list)
+		
+		return node_list, turn_list
+
+	def turns(self, node_list):
+		turn_list = []
+		for i in range(len(node_list)-1):
+			turn = self.A[node_list[i], node_list[i+1], 1]
+			if turn == 0:
+				rospy.logwarn("Planned path contained unconnected nodes")
+				turn_list = []
+				break
+			else:
+				turn_list.append(turn)
+		return turn_list
+
+	def pathHome(self):
+		node_list = self.breadcrumb.reverse()
+		turn_list = self.turns(node_list)
+		return node_list, turn_list
 
 	def start(self):
 		rate = rospy.Rate(self.rate) # 50Hz
 		while not rospy.is_shutdown():
 			rate.sleep()
-			self.findPath()
+			turn_list = []
+			if (self.first_graph_msg):
+				if (self.task == "Home_slow"):
+					node_list, turn_list = self.pathHome()
+					print("Robot is heading home now.")
+				else:
+					node_list, turn_list = self.findPath()
+			else:
+				rospy.loginfo("Waiting for first graph message")
+
 			self.pub1.publish(self.at_a_node)
+			if turn_list:
+				self.next_turn.data = turn_list[0]
+				if (self.at_a_node.data):
+					print("Robot is at a node.  Turn to %0.2f deg.  Current heading is %0.2f deg" % ((180/np.pi)*turn_list[0], (180/np.pi)*self.yaw))
+				else:
+					print("Next turn is %0.2f deg at node %d." % ((180/np.pi)*turn_list[1], node_list[1]))
+			else:
+				print("The robot has left from a node with an unexplored edge.  Will update command at next junction.")
+				self.next_turn.data = -10.0
 			self.pub2.publish(self.next_turn)
 		return
 
 	def __init__(self):
 		node_name = "graph2path"
 		rospy.init_node(node_name)
-		self.rate = 1.0
+		self.rate = float(rospy.get_param("/map2graph/rate", 1.0))
 
 		# Subscribers
-		rospy.Subscriber("/node_skeleton/graph", Graph, self.getGraph)
-		rospy.Subscriber("/X1/odometry", Odometry, self.getPosition)
+		rospy.Subscriber("graph", Graph, self.getGraph)
+		self.first_graph_msg = False
+		rospy.Subscriber("odometry", Odometry, self.getOdom)
 		rospy.Subscriber("task", String, self.getTask)
 
 		# Publishers
@@ -84,16 +222,21 @@ class graph2path:
 
 		# Initialize Subscription storage objects
 		self.position = Point()
+		self.yaw = 0.0
 		self.task = "Explore"
 		# self.task = "Home"
+		# self.task = "Home_slow"
 
 		# Initialize Publisher message objects
 		self.at_a_node = Bool()
 		self.at_a_node.data = False
 		self.next_turn = Float32()
-		self.next_turn.data = 0.0
+		self.next_turn.data = -10.0
 
+		# Graph and node history holder arrays
 		self.A = np.array([])
+		self.node_history = []
+		self.breadcrumbs = [] # a way home
 
 if __name__ == '__main__':
 	node = graph2path()

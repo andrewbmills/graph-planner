@@ -1,0 +1,17 @@
+<launch>
+   <node pkg="graph-planner" type="graph2path.py" name="graph2path" output="screen">
+     <!-- Inputs (Subscribed Topic Names) -->
+    <!-- <remap from="odometry" to="/jackal_odom"/> -->
+    <remap from="graph" to="node_skeleton/graph"/>
+    <remap from="odometry" to="/X1/odometry"/>
+    <remap from="task" to="/X1/task"/>
+
+    <!-- Outputs (Published Topic Names) -->
+    <remap from="at_a_node" to="/X1/at_a_node"/>
+    <remap from="next_turn" to="/X1/next_turn"/>
+
+    <!-- Parameters -->
+    <param name="rate" value="1.0"/>
+   </node>
+
+</launch>
