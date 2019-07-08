@@ -1,15 +1,24 @@
 <launch>
   <node pkg="graph-planner" type="centering_ground.py" name="centering" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
+    <!-- LiDAR Data -->
     <remap from="points" to="/X1/points_filtered"/>
 
     <!-- Outputs (Published Topic Names) -->
+    <!-- Twist Command -->
     <remap from="cmd_vel" to="/X1/cmd_vel_centering"/>
 
     <!-- Parameters -->
+    <!-- Forward speed in m/s -->
     <param name="speed" value="1.2"/>
+
+    <!-- Update rate (Hz) -->
     <param name="rate" value="10.0"/>
+
+    <!-- Max yaw rate in rad/s -->
     <param name="yaw_rate_max" value="0.2"/>
+
+    <!-- Depth vs Azimuth plot window -->
     <param name="plot" value="1"/>
   </node>
 </launch>
