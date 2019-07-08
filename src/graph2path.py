@@ -20,6 +20,20 @@ def angleDiff(a, b):
 def wrapToPi(a):
 	# Wraps an angle to sit on the interval (-pi,pi)
 	a = (a + np.pi) % (2*np.pi) - np.pi
+	return a
+
+def euler2quaternion(euler):
+	# Pre-allocate quaternion array
+	q = [0, 0, 0, 0]
+	# We assume "ZYX" rotation order
+	c = np.cos(euler/2);
+	s = np.sin(euler/2);
+	# Calculate q
+	q[0] = c[0]*c[1]*c[2]+s[0]*s[1]*s[2]
+	q[1] = c[0]*c[1]*s[2]-s[0]*s[1]*c[2]
+	q[2] = c[0]*s[1]*c[2]+s[0]*c[1]*s[2]
+	q[3] = s[0]*c[1]*c[2]-c[0]*s[1]*s[2]
+	return q
 
 class graph2path:
 	def maintainCrumbs(self, new_id):
@@ -173,10 +187,31 @@ class graph2path:
 				turn_list.append(turn)
 		return turn_list
 
+	def setTurnCommand(self, goal_angle):
+		delta_angle = angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*self.yaw)
+		print("delta_angle = %0.2f degrees" % (delta_angle))
+		if np.abs(delta_angle) > 30.0:
+			self.turn_command.linear.x = 0.0
+		else:
+			self.turn_command.linear.x = self.speed
+		self.turn_command.angular.z = self.turn_gain*((np.pi/180.0)*delta_angle)
+		return
+
 	def pathHome(self):
 		node_list = self.breadcrumb.reverse()
 		turn_list = self.turns(node_list)
 		return node_list, turn_list
+
+	def setPoseMsg(self, euler):
+		q = euler2quaternion(euler)
+		self.next_turn_pose.pose.position = self.position
+		self.next_turn_pose.pose.orientation.w = q[0]
+		self.next_turn_pose.pose.orientation.x = q[1]
+		self.next_turn_pose.pose.orientation.y = q[2]
+		self.next_turn_pose.pose.orientation.z = q[3]
+		self.next_turn_pose.header.stamp = rospy.Time.now()
+		self.next_turn_pose.header.frame_id = self.fixed_frame
+		return
 
 	def start(self):
 		rate = rospy.Rate(self.rate) # 50Hz
@@ -191,24 +226,32 @@ class graph2path:
 					node_list, turn_list = self.findPath()
 			else:
 				rospy.loginfo("Waiting for first graph message")
+				continue
 
 			self.pub1.publish(self.at_a_node)
 			if turn_list:
 				self.next_turn.data = turn_list[0]
+				self.setPoseMsg(np.array([turn_list[0], 0.0, 0.0]))
 				if (self.at_a_node.data):
 					print("Robot is at a node.  Turn to %0.2f deg.  Current heading is %0.2f deg" % ((180/np.pi)*turn_list[0], (180/np.pi)*self.yaw))
+					self.setTurnCommand(turn_list[0])
+					self.pub3.publish(self.turn_command)
 				else:
 					print("Next turn is %0.2f deg at node %d." % ((180/np.pi)*turn_list[1], node_list[1]))
 			else:
+				self.setPoseMsg(np.array([0.0, -np.pi/2, 0.0]))
 				print("The robot has left from a node with an unexplored edge.  Will update command at next junction.")
 				self.next_turn.data = -10.0
 			self.pub2.publish(self.next_turn)
+			self.pub4.publish(self.next_turn_pose)
 		return
 
 	def __init__(self):
 		node_name = "graph2path"
 		rospy.init_node(node_name)
-		self.rate = float(rospy.get_param("/map2graph/rate", 1.0))
+		self.rate = float(rospy.get_param("/map2graph/rate", 5.0))
+		self.fixed_frame = str(rospy.get_param("/map2graph/fixed_frame", "world"))
+		self.speed = float(rospy.get_param("/map2graph/speed", 1.0))
 
 		# Subscribers
 		rospy.Subscriber("graph", Graph, self.getGraph)
@@ -219,6 +262,8 @@ class graph2path:
 		# Publishers
 		self.pub1 = rospy.Publisher("at_a_node", Bool, queue_size=10)
 		self.pub2 = rospy.Publisher("next_turn", Float32, queue_size=10)
+		self.pub3 = rospy.Publisher("cmd_turn_junction", Twist, queue_size=10)
+		self.pub4 = rospy.Publisher("next_turn_pose", PoseStamped, queue_size=10)
 
 		# Initialize Subscription storage objects
 		self.position = Point()
@@ -232,11 +277,16 @@ class graph2path:
 		self.at_a_node.data = False
 		self.next_turn = Float32()
 		self.next_turn.data = -10.0
+		self.turn_command = Twist()
+		self.next_turn_pose = PoseStamped()
 
 		# Graph and node history holder arrays
 		self.A = np.array([])
 		self.node_history = []
 		self.breadcrumbs = [] # a way home
+
+		# Heading controller
+		self.turn_gain = 0.1
 
 if __name__ == '__main__':
 	node = graph2path()

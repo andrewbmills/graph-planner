@@ -101,11 +101,11 @@ class GraphSolver:
 				if graph[u][i] and i in queue: 
 					if dist[u] + graph[u][i] < dist[i]: 
 						dist[i] = dist[u] + graph[u][i] 
-						parent[i] = u 
-
+						parent[i] = u
 
 		# print the constructed distance array 
-		self.printSolution(dist,parent,src) 
+		# self.printSolution(dist,parent,src) 
+		return parent, dist 
 
 if __name__ == '__main__':
 	g = GraphSolver() 

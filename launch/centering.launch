@@ -4,10 +4,10 @@
     <remap from="points" to="/X1/points_filtered"/>
 
     <!-- Outputs (Published Topic Names) -->
-    <remap from="cmd_vel" to="/X1/cmd_vel"/>
+    <remap from="cmd_vel" to="/X1/cmd_vel_centering"/>
 
     <!-- Parameters -->
-    <param name="speed" value="0.8"/>
+    <param name="speed" value="1.2"/>
     <param name="rate" value="10.0"/>
     <param name="yaw_rate_max" value="0.2"/>
     <param name="plot" value="1"/>

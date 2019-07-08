@@ -5,13 +5,27 @@
     <remap from="graph" to="node_skeleton/graph"/>
     <remap from="odometry" to="/X1/odometry"/>
     <remap from="task" to="/X1/task"/>
+    <remap from="cmd_turn_junction" to="/X1/cmd_vel_junction"/>
 
     <!-- Outputs (Published Topic Names) -->
     <remap from="at_a_node" to="/X1/at_a_node"/>
     <remap from="next_turn" to="/X1/next_turn"/>
 
     <!-- Parameters -->
-    <param name="rate" value="1.0"/>
+    <param name="rate" value="3.0"/>
+   </node>
+
+   <node pkg="graph-planner" type="junction_twistmsg_switch.py" name="cmd_vel_switch" output="screen">
+     <!-- Inputs (Subscribed Topic Names) -->
+    <remap from="cmd_vel_1" to="/X1/cmd_vel_centering"/>
+    <remap from="cmd_vel_2" to="/X1/cmd_vel_junction"/>
+    <remap from="switch" to="/X1/at_a_node"/>
+
+    <!-- Outputs (Published Topic Names) -->
+    <remap from="cmd_vel" to="/X1/cmd_vel"/>
+
+    <!-- Parameters -->
+    <param name="rate" value="10.0"/>
    </node>
 
 </launch>

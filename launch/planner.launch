@@ -47,7 +47,7 @@
     <!-- Parameters -->
     <param name="sRadius" value="3.0"/>
     <param name="rRadius" value="3.0"/>
-    <param name="eRadius" value="0.4"/>
+    <param name="eRadius" value="0.7"/>
   </node>
 
 </launch>
