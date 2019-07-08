@@ -75,13 +75,8 @@ class graph2path:
 
 		self.unexplored_edges = np.array(self.unexplored_edges)
 		self.current_node = data.currentNodeId
+		self.current_node_position = data.node[self.current_node].position
 		self.current_edge = data.currentEdge
-
-		# The graph current edge message reads -10 if the robot is at a node
-		if (self.current_edge < -5.0) and (n > 1):
-			self.at_a_node.data = True
-		else:
-			self.at_a_node.data = False
 
 		# Add the current node to the history of nodes if it's different than the last added
 		if (self.node_history):
@@ -224,6 +219,12 @@ class graph2path:
 					print("Robot is heading home now.")
 				else:
 					node_list, turn_list = self.findPath()
+				# Check if robot is at a node
+				dist = np.sqrt((self.position.x - self.current_node_position.x)**2 + (self.position.y - self.current_node_position.y)**2)
+				if (dist <= self.at_a_node_radius):
+					self.at_a_node.data = True
+				else:
+					self.at_a_node.data = False
 			else:
 				rospy.loginfo("Waiting for first graph message")
 				continue
@@ -252,6 +253,7 @@ class graph2path:
 		self.rate = float(rospy.get_param("/map2graph/rate", 5.0))
 		self.fixed_frame = str(rospy.get_param("/map2graph/fixed_frame", "world"))
 		self.speed = float(rospy.get_param("/map2graph/speed", 1.0))
+		self.at_a_node_radius = float(rospy.get_param("/map2graph/node_radius", 3.0))
 
 		# Subscribers
 		rospy.Subscriber("graph", Graph, self.getGraph)
@@ -267,6 +269,7 @@ class graph2path:
 
 		# Initialize Subscription storage objects
 		self.position = Point()
+		self.current_node_position = Point()
 		self.yaw = 0.0
 		self.task = "Explore"
 		# self.task = "Home"
