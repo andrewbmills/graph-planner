@@ -73,7 +73,6 @@ class graph2path:
 			if node.nUnexploredEdge:
 				self.unexplored_edges.append([i, node.unexploredEdge])
 
-		self.unexplored_edges = np.array(self.unexplored_edges)
 		self.current_node = data.currentNodeId
 		self.current_node_position = data.node[self.current_node].position
 		self.current_edge = data.currentEdge
@@ -112,7 +111,7 @@ class graph2path:
 		else:
 			# Closest node with an unexplored edge
 			# print(self.unexplored_edges)
-			goal_list = np.array(self.unexplored_edges[:,0], dtype=np.int16)
+			goal_list = np.array([row[0] for row in self.unexplored_edges], dtype=np.int16)
 			# print(goal_list)
 			dist = np.array(dist)
 			# print(dist)
@@ -144,7 +143,7 @@ class graph2path:
 			else:
 				# Add the turn at the goal node as the minimum turning angle from the arriving yaw
 				delta_min = 361.0
-				for goal_angle in self.unexplored_edges[destination_edge_idx, 1]:
+				for goal_angle in self.unexplored_edges[destination_edge_idx][1]:
 					delta = np.abs(angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*arriving_angle))
 					if (delta < delta_min):
 						delta_min = delta
@@ -159,7 +158,7 @@ class graph2path:
 				else:
 					# Add the turn at the goal node as the minimum turning angle from the current yaw
 					delta_min = 361.0
-					for goal_angle in self.unexplored_edges[destination_edge_idx, 1]:
+					for goal_angle in self.unexplored_edges[destination_edge_idx][1]:
 						delta = np.abs(angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*self.yaw))
 						if (delta < delta_min):
 							delta_min = delta
