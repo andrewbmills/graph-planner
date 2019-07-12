@@ -57,12 +57,14 @@ class graph2path:
 
 	def getGraph(self, data): # Graph subscriber callback function
 		self.first_graph_msg = True
+		self.node_position_list = []
 		# Generates an adjacency graph (numpy 2d array) from Graph.msg data
 		n = data.size
 		self.A = np.zeros((n,n,2)) # Adjacency matrix (First nxn is costs and second one is angles)
 		self.unexplored_edges = [] # a (p x e+1) list of unexplored edges.  Column 1 is the node id and columns 2 to e+1 are the edge angles
 		for node in data.node:
 			i = int(node.id)
+			self.node_position_list.append(node.position)
 			for edge_num in range(node.nExploredEdge):
 				j = node.neighborId[edge_num]
 				cost = node.edgeCost[edge_num]
@@ -112,13 +114,16 @@ class graph2path:
 			# Closest node with an unexplored edge
 			# print(self.unexplored_edges)
 			goal_list = np.array([row[0] for row in self.unexplored_edges], dtype=np.int16)
-			# print(goal_list)
-			dist = np.array(dist)
-			# print(dist)
-			destination_edge_idx = np.argmin(dist[goal_list])
-			goal_id = goal_list[destination_edge_idx]
-			# print(dist[goal_list])
-			# print(goal_id)
+			if (len(goal_list)>0):
+				# print(goal_list)
+				dist = np.array(dist)
+				# print(dist)
+				destination_edge_idx = np.argmin(dist[goal_list])
+				goal_id = goal_list[destination_edge_idx]
+				# print(dist[goal_list])
+				# print(goal_id)
+			else:
+				return
 
 		# print(parent)
 		# print(dist)
@@ -166,7 +171,7 @@ class graph2path:
 					turn_list.append(goal_angle_min)
 
 		print(turn_list)
-		
+
 		return node_list, turn_list
 
 	def turns(self, node_list):
@@ -207,6 +212,23 @@ class graph2path:
 		self.next_turn_pose.header.frame_id = self.fixed_frame
 		return
 
+	def setPoseArrayMsg(self, nodes, turns):
+		self.turn_list_poses = PoseArray()
+		self.turn_list_poses.header.stamp = rospy.Time.now()
+		self.turn_list_poses.header.frame_id = self.fixed_frame
+		if (not nodes) or (not turns):
+			return
+		for i in range(len(nodes)):
+			newPose = Pose()
+			newPose.position = self.node_position_list[nodes[i]]
+			q = euler2quaternion(np.array([turns[i], 0.0, 0.0]))
+			newPose.orientation.w = q[0]
+			newPose.orientation.x = q[1]
+			newPose.orientation.y = q[2]
+			newPose.orientation.z = q[3]
+			self.turn_list_poses.poses.append(newPose)
+		return
+
 	def start(self):
 		rate = rospy.Rate(self.rate) # 50Hz
 		while not rospy.is_shutdown():
@@ -237,13 +259,18 @@ class graph2path:
 					self.setTurnCommand(turn_list[0])
 					self.pub3.publish(self.turn_command)
 				else:
-					print("Next turn is %0.2f deg at node %d." % ((180/np.pi)*turn_list[1], node_list[1]))
+					if (len(turn_list) > 1):
+						print("Next turn is %0.2f deg at node %d." % ((180/np.pi)*turn_list[1], node_list[1]))
+					else:
+						print("The robot has left from a node with an unexplored edge.  Will update command at next junction.")
 			else:
-				self.setPoseMsg(np.array([0.0, -np.pi/2, 0.0]))
+				self.setPoseMsg(np.array([self.yaw, 0.0, 0.0]))
 				print("The robot has left from a node with an unexplored edge.  Will update command at next junction.")
 				self.next_turn.data = -10.0
 			self.pub2.publish(self.next_turn)
 			self.pub4.publish(self.next_turn_pose)
+			self.setPoseArrayMsg(node_list, turn_list)
+			self.pub5.publish(self.turn_list_poses)
 		return
 
 	def __init__(self):
@@ -265,6 +292,7 @@ class graph2path:
 		self.pub2 = rospy.Publisher("next_turn", Float32, queue_size=10)
 		self.pub3 = rospy.Publisher("cmd_turn_junction", Twist, queue_size=10)
 		self.pub4 = rospy.Publisher("next_turn_pose", PoseStamped, queue_size=10)
+		self.pub5 = rospy.Publisher("turn_list_poses", PoseArray, queue_size=10)
 
 		# Initialize Subscription storage objects
 		self.position = Point()
@@ -281,6 +309,8 @@ class graph2path:
 		self.next_turn.data = -10.0
 		self.turn_command = Twist()
 		self.next_turn_pose = PoseStamped()
+		self.turn_list_poses = PoseArray()
+		self.turn_list_poses.header.frame_id = self.fixed_frame
 
 		# Graph and node history holder arrays
 		self.A = np.array([])

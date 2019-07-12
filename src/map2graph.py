@@ -52,7 +52,7 @@ class node_skeleton:
 
 	def getPosition(self, data):
 		self.position = data.pose.pose.position
-		self.position.z = self.position.z  + 1.0*self.voxel_size
+		self.position.z = self.position.z  + 2.0*self.voxel_size
 		self.position_get_first = True
 		return
 
@@ -131,7 +131,7 @@ class node_skeleton:
 							edge_starts.append(ind)
 			# print(edge_starts)
 			edge_start_indices.append(edge_starts)
-		
+
 		# print(edge_start_indices)
 
 		neighbors_list = []
@@ -385,7 +385,7 @@ class node_skeleton:
 		rospy.Subscriber('/pointcloud', PointCloud2, self.getCloud)
 		self.cloud_get = False
 		self.cloud_get_first = False
-		
+
 		# Initialize Publisher topics
 		pubTopic = 'node_skeleton/closest_node'
 		self.pub_closest_node = rospy.Publisher(pubTopic, PointStamped, queue_size=10)
