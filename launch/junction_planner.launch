@@ -35,8 +35,8 @@
     <param name="plot_steps" value="1"/>
 
     <!-- Gaussian kernel parameters for blurring the 2D occupancy grid -->
-    <param name="map_blur" value="3.0"/>
-    <param name="map_threshold" value="0.7"/>
+    <param name="map_blur" value="5.0"/>
+    <param name="map_threshold" value="1.0"/>
   </node>
 
   <!-- Path planner from graph node -->

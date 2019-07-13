@@ -14,7 +14,7 @@
     <param name="speed" value="1.2"/>
 
     <!-- Update rate (Hz) -->
-    <param name="rate" value="10.0"/>
+    <param name="rate" value="5.0"/>
 
     <!-- Max yaw rate in rad/s -->
     <param name="yaw_rate_max" value="0.2"/>

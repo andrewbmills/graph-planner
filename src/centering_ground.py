@@ -144,7 +144,7 @@ class wfi_centering_controller:
 		self.u0 = float(rospy.get_param("/centering/speed", 0.8)) # m/s
 		self.rate = float(rospy.get_param("/centering/rate", 10.0)) # Hz
 		self.show_plot = bool(rospy.get_param("/centering/plot", False)) # Bool
-		self.min_peak_height = float(rospy.get_param("/centering/min_peak_height", 8.0)) # meters
+		self.min_peak_height = float(rospy.get_param("/centering/min_peak_height", 10.0)) # meters
 
 		# Initialize ROS node and Subscribers
 		node_name = 'centering_controller'
@@ -184,12 +184,14 @@ class wfi_centering_controller:
 				if not (loops % 5):
 					self.detectJunctions()
 				loops = loops + 1
-
-			if self.junction_count.data == 1:
-				# Turn until you're facing the only junction_direction
-				if abs(self.junction_headings[0]) > 30*np.pi/180:
-					print("Dead end detected.  Turning around.")
-					self.cmd_vel.angular.z = -np.sign(self.junction_headings[0])*self.yaw_rate_max
+				# Turn around at dead ends
+				if self.junction_count.data == 1:
+					# Turn until you're facing the only junction_direction
+					if abs(self.junction_headings[0]) > 45*np.pi/180:
+						print("Dead end detected.  Turning around.")
+						self.cmd_vel.angular.z = np.sign(self.junction_headings[0])*self.yaw_rate_max
+						print("Yaw rate = %0.2f deg/s" % (self.cmd_vel.angular.z*(180/np.pi)))
+						self.cmd_vel.linear.x = self.u0/5.0
 
 			# Saturate the turn rate command
 			if (np.absolute(self.cmd_vel.angular.z) >= self.yaw_rate_max):

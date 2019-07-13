@@ -5,7 +5,7 @@
     <!-- First and second command velocities -->
     <remap from="cmd_vel_1" to="/X1/cmd_vel_centering"/>
     <remap from="cmd_vel_2" to="/X1/cmd_vel_junction"/>
-    
+
     <!-- Whether to stay on cmd_vel_1 (False) or to switch to cmd_vel_2 (True) -->
     <remap from="switch" to="/X1/at_a_node"/>
 
@@ -15,6 +15,6 @@
 
     <!-- Parameters -->
     <!-- Update rate (Hz) -->
-    <param name="rate" value="3.0"/>
+    <param name="rate" value="5.0"/>
   </node>
 </launch>
