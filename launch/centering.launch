@@ -1,4 +1,5 @@
 <launch>
+  <!-- Centering controller node -->
   <node pkg="graph-planner" type="centering_ground.py" name="centering" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
     <!-- LiDAR Data -->

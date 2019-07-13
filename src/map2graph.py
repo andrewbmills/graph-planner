@@ -52,7 +52,7 @@ class node_skeleton:
 
 	def getPosition(self, data):
 		self.position = data.pose.pose.position
-		self.position.z = self.position.z  + 2.0*self.voxel_size
+		self.position.z = self.position.z  + 3.0*self.voxel_size
 		self.position_get_first = True
 		return
 
@@ -257,11 +257,11 @@ class node_skeleton:
 			plt.show()
 
 			if (self.plot_on and self.plot_steps):
-				plt.imshow(np.less(img, self.thresh), cmap=plt.cm.gray, interpolation='nearest')
+				plt.imshow(img, interpolation='nearest')
 				plt.draw()
 				plt.pause(0.25)
 
-				plt.imshow(occGrid, cmap=plt.cm.gray, interpolation='nearest')
+				plt.imshow(img_blur, cmap=plt.cm.gray, interpolation='nearest')
 				plt.draw()
 				plt.pause(0.25)
 

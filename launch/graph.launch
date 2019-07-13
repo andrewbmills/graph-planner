@@ -1,0 +1,36 @@
+<launch>
+<!-- Graph construction node -->
+  <node name="gbm_node" pkg="gbm_pkg" type="gbm_node"  output="screen">
+    <!-- Odom -->
+    <remap from="odometry" to="/X1/odometry"/>
+    <!-- <remap from="odometry" to="/jackal_odom"/> -->
+    
+    <!-- Node skeleton output topics -->
+    <remap from="closest_node" to="/node_skeleton/closest_node"/>
+    <remap from="edge_list" to="/node_skeleton/closest_edges"/>
+
+    <!-- Custom graph msg -->
+    <remap from="graph" to="node_skeleton/graph"/>
+
+    <!-- Parameters -->
+    <!-- You'll have to talk to Shakeeb -->
+    <param name="sRadius" value="3.0"/>
+    <param name="rRadius" value="3.0"/>
+    <param name="eRadius" value="0.7"/>
+    <param name="logFilePath" value ="/home/andrew/catkin_ws/src/gbm_pkg/logs/mission_log.txt"/>
+  </node>
+
+<!-- Graph plotting in rviz node -->
+  <node name="graphmsg2rviz" pkg="graph-planner" type="graphmsg2rviz.py"  output="screen">
+    <!-- Graph msg -->
+    <remap from="graph" to="node_skeleton/graph"/>
+    <!-- Rviz topics -->
+    <remap from="ExploredEdges" to="node_skeleton/rviz_plugin/ExploredEdges"/>
+    <remap from="UnexploredEdges" to="node_skeleton/rviz_plugin/UnexploredEdges"/>
+    <remap from="CurrentEdge" to="node_skeleton/rviz_plugin/CurrentEdge"/>
+
+    <!-- Parameters -->
+    <param name="rate" value="5.0"/>
+    <param name="fixed_frame" value="world"/>
+  </node>
+</launch>

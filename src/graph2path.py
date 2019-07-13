@@ -276,10 +276,10 @@ class graph2path:
 	def __init__(self):
 		node_name = "graph2path"
 		rospy.init_node(node_name)
-		self.rate = float(rospy.get_param("/map2graph/rate", 5.0))
-		self.fixed_frame = str(rospy.get_param("/map2graph/fixed_frame", "world"))
-		self.speed = float(rospy.get_param("/map2graph/speed", 1.0))
-		self.at_a_node_radius = float(rospy.get_param("/map2graph/node_radius", 3.0))
+		self.rate = float(rospy.get_param("/graph2path/rate", 3.0))
+		self.fixed_frame = str(rospy.get_param("/graph2path/fixed_frame", "world"))
+		self.speed = float(rospy.get_param("/graph2path/speed", 1.0))
+		self.at_a_node_radius = float(rospy.get_param("/graph2path/node_radius", 3.0))
 
 		# Subscribers
 		rospy.Subscriber("graph", Graph, self.getGraph)
