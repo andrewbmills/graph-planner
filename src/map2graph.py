@@ -220,12 +220,16 @@ class node_skeleton:
 				points = np.array(list(cloud))
 
 			# Find the x and y extrema
-			x_min = np.amin(points[:,0])
-			x_max = np.amax(points[:,0])
-			x_size = int(np.round((x_max - x_min)/self.voxel_size)) + 1 + 2*self.img_pad
-			y_min = np.amin(points[:,1])
-			y_max = np.amax(points[:,1])
-			y_size = int(np.round((y_max - y_min)/self.voxel_size)) + 1 + 2*self.img_pad
+			try:
+				x_min = np.amin(points[:,0])
+				x_max = np.amax(points[:,0])
+				x_size = int(np.round((x_max - x_min)/self.voxel_size)) + 1 + 2*self.img_pad
+				y_min = np.amin(points[:,1])
+				y_max = np.amax(points[:,1])
+				y_size = int(np.round((y_max - y_min)/self.voxel_size)) + 1 + 2*self.img_pad
+			except:
+				rospy.logwarn("PointCloud2 msg is empty.")
+				return
 
 			# Restrict points to just the z_slice neighborhood
 			slice_indices = np.logical_and(np.less(points[:,2], self.position.z + self.num_slices*self.voxel_size/2.0), np.greater(points[:,2], self.num_slices*self.position.z - self.voxel_size/2.0))
