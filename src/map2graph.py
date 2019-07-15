@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import rospy
+import time
 # import tf
 import cv2
 from matplotlib import pyplot as plt
@@ -209,6 +210,8 @@ class node_skeleton:
 	def cloud2img(self):
 		if (self.cloud_get):
 			self.cloud_get = False
+			if (self.time_msgs):
+				start_time = time.time()
 			if (self.mapType == "Octomap"):
 				# Convert pc2 msg to a python list (this is the free cells vis array)
 				cloud = pc2.read_points(self.pc2_data, field_names = ("x", "y", "z"), skip_nans=True)
@@ -219,7 +222,11 @@ class node_skeleton:
 				cloud = pc2.read_points(self.pc2_data, field_names = ("x", "y", "z", "intensity"), skip_nans=True)
 				points = np.array(list(cloud))
 
+			if (self.time_msgs):
+				print("--- %0.2f ms: Reading map data ---" % ((time.time() - start_time)*1000.0))
 			# Find the x and y extrema
+			if (self.time_msgs):
+				start_time = time.time()
 			try:
 				x_min = np.amin(points[:,0])
 				x_max = np.amax(points[:,0])
@@ -230,8 +237,13 @@ class node_skeleton:
 			except:
 				rospy.logwarn("PointCloud2 msg is empty.")
 				return
+			if (self.time_msgs):				
+				print("--- %0.2f ms: Finding x and y extrema ---" % ((time.time() - start_time)*1000.0))
 
 			# Restrict points to just the z_slice neighborhood
+			if (self.time_msgs):
+				start_time = time.time()
+
 			slice_indices = np.logical_and(np.less(points[:,2], self.position.z + self.num_slices*self.voxel_size/2.0), np.greater(points[:,2], self.num_slices*self.position.z - self.voxel_size/2.0))
 			points = points[slice_indices,:]
 
@@ -245,6 +257,11 @@ class node_skeleton:
 				if (self.mapType == "Voxblox"):
 					img[x_idx, y_idx] = p[3]
 
+			if (self.time_msgs):
+				print("--- %0.2s ms: Map conversion to img  ---" % ((time.time() - start_time)*1000.0))
+			# Gaussian blur timing start
+			if (self.time_msgs):
+				start_time = time.time()
 			# logical threshold the image for skeletonization
 			if (self.mapType == "Octomap"):
 				# Gaussian blur the image
@@ -255,10 +272,13 @@ class node_skeleton:
 
 			occGrid = np.less(img_blur, self.thresh)
 
+			if (self.time_msgs):
+				print("--- %0.2f ms: Gaussian Blur ---" % ((time.time() - start_time)*1000.0))
 			# Get unique entries and counts in the last 10 junction counts
-			plt.cla()
-			plt.ion()
-			plt.show()
+			if (self.plot_on):
+				plt.cla()
+				plt.ion()
+				plt.show()
 
 			if (self.plot_on and self.plot_steps):
 				plt.imshow(img, interpolation='nearest')
@@ -284,25 +304,40 @@ class node_skeleton:
 
 			# Python's skimage library
 			# skel = skeletonize(~occGrid)
+			if (self.time_msgs):
+				start_time = time.time()
 			skel = thin(~occGrid)
 			skel = skel.astype(np.uint16)
+			if (self.time_msgs):
+				print("--- %0.2f ms: Skeletonization ---" % ((time.time() - start_time)*1000.0))
 
+			# Turn skeleton into a graph
+			if (self.time_msgs):
+				start_time = time.time()
 			nodes, nodes_end, edges = self.skel2Graph(skel)
+			if (self.time_msgs):
+				print("--- %0.2f ms: Skeleton to Graph ---" % ((time.time() - start_time)*1000.0))
 
 			# Plot occGrid, skeleton and graph
 			# plt.imshow(~skel, cmap=plt.cm.gray, interpolation='nearest')
 			# plt.imshow(~occGrid, cmap=plt.cm.gray, interpolation='nearest')
-			plt.plot(nodes_end[:,1], nodes_end[:,0], 'go', markersize=15, markerfacecolor='none')
-			plt.title('map2graph')
+
+			# Plotting time start
+			if (self.time_msgs):
+				start_time = time.time()
+
+			if len(nodes):
+				nodes_all = np.vstack((nodes, nodes_end))
+			else:
+				nodes_all = nodes_end
 
 			# Plot node number labels
 			if (self.plot_on):
+				plt.plot(nodes_end[:,1], nodes_end[:,0], 'go', markersize=15, markerfacecolor='none')
+				plt.title('map2graph')
 				plt.imshow(occGrid + skel, cmap=plt.cm.gray, interpolation='nearest')
 				if len(nodes):
-					nodes_all = np.vstack((nodes, nodes_end))
 					plt.plot(nodes[:,1], nodes[:,0], 'ro', markersize=15, markerfacecolor='none')
-				else:
-					nodes_all = nodes_end
 				node_label = 0
 				for n in nodes_all:
 					plt.text(n[1]-5, n[0]-5, str(node_label), fontsize=12)
@@ -314,6 +349,9 @@ class node_skeleton:
 			if (self.plot_on and self.plot_steps):
 				plt.pause(0.25)
 
+			if (self.time_msgs):
+				print("--- %0.2f ms: Plotting ---" % ((time.time() - start_time)*1000.0))
+
 			# Calculate published topics
 			num_nodes, _ = np.shape(nodes_all)
 
@@ -321,10 +359,20 @@ class node_skeleton:
 				# Don't need to find the closest node if there are none
 				return
 
+			# Closest node calculation time start
+			if (self.time_msgs):
+				start_time = time.time()
+
 			x_ind = int(round((self.position.x - x_min)/self.voxel_size)) + self.img_pad
 			y_ind = int(round((self.position.y - y_min)/self.voxel_size)) + self.img_pad
 			dist = np.linalg.norm(nodes_all - np.tile(np.array([x_ind, y_ind]), [num_nodes, 1]), axis=1)
-			# print(dist)
+			if (self.time_msgs):
+				print("--- %0.2f ms: Distance to closest node ---" % ((time.time() - start_time)*1000.0))
+
+			#ROS topic publishing time start
+			if (self.time_msgs):
+				start_time = time.time()
+
 			closest_node_id = np.argmin(dist)
 			self.closest_node.point.x = (nodes_all[closest_node_id,0] - self.img_pad)*self.voxel_size + x_min
 			self.closest_node.point.y = (nodes_all[closest_node_id,1] - self.img_pad)*self.voxel_size + y_min
@@ -363,6 +411,8 @@ class node_skeleton:
 			dim.label = "edge_angles"
 			dim.stride = int(32)
 			self.edge_list.layout.dim[0] = dim
+			if (self.time_msgs):
+				print("--- %0.2f ms: Writing to published topics ---" % ((time.time() - start_time)*1000.0))
 		return
 
 	def __init__(self):
@@ -378,6 +428,7 @@ class node_skeleton:
 		self.num_slices = int(rospy.get_param("/map2graph/num_slices", 1))
 		self.plot_on = bool(rospy.get_param("/map2graph/plotting", True))
 		self.plot_steps = bool(rospy.get_param("/map2graph/plot_steps", False))
+		self.time_msgs = bool(rospy.get_param("/map2graph/time_msgs", False))
 		map_blur = float(rospy.get_param("/map2graph/map_blur", 5.0))
 		map_thresh = float(rospy.get_param("/map2graph/map_threshold", 0.4))
 
@@ -435,6 +486,8 @@ class node_skeleton:
 	def start(self):
 		rate = rospy.Rate(self.rate)
 		while not rospy.is_shutdown():
+			if (self.time_msgs):
+				start_time = time.time()
 			rate.sleep()
 			# self.getTransform()
 			if (self.cloud_get_first and self.position_get_first):
@@ -448,6 +501,8 @@ class node_skeleton:
 			self.pub_closest_node.publish(self.closest_node)
 			self.pub_closest_edges.publish(self.edge_list)
 			self.pub_edge_poses.publish(self.edge_poses)
+			if (self.time_msgs):
+				print("--- %0.2f ms: Full node loop ---" % ((time.time() - start_time)*1000.0))
 		return
 
 if __name__ == '__main__':
