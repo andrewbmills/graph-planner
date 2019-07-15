@@ -250,7 +250,6 @@ class graph2path:
 				rospy.loginfo("Waiting for first graph message")
 				continue
 
-			self.pub1.publish(self.at_a_node)
 			if turn_list:
 				self.next_turn.data = turn_list[0]
 				self.setPoseMsg(np.array([turn_list[0], 0.0, 0.0]))
@@ -266,11 +265,12 @@ class graph2path:
 			else:
 				self.setPoseMsg(np.array([self.yaw, 0.0, 0.0]))
 				print("The robot has left from a node with an unexplored edge.  Will update command at next junction.")
-				self.next_turn.data = -10.0
+				self.next_turn.data = self.yaw
 			self.pub2.publish(self.next_turn)
 			self.pub4.publish(self.next_turn_pose)
 			self.setPoseArrayMsg(node_list, turn_list)
 			self.pub5.publish(self.turn_list_poses)
+			self.pub1.publish(self.at_a_node)
 		return
 
 	def __init__(self):
