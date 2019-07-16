@@ -123,7 +123,8 @@ class graph2path:
 				# print(dist[goal_list])
 				# print(goal_id)
 			else:
-				return
+				print("No unexplored_edges, vehicle is heading home.")
+				goal_id = 0
 
 		# print(parent)
 		# print(dist)
@@ -142,7 +143,7 @@ class graph2path:
 		if (len(node_list) > 1):
 			turn_list = self.turns(node_list)
 			arriving_angle = wrapToPi(self.A[node_list[-1], node_list[-2], 1] + np.pi)
-			if (self.task == "Home"):
+			if (self.task == "Home") or (goal_id == 0):
 				# Just go straight when you get home
 				turn_list.append(arriving_angle)
 			else:
@@ -157,7 +158,7 @@ class graph2path:
 		else:
 			# If the vehicle is at that node, then proceed.  If not, the turn list should be empty.
 			if (self.at_a_node.data):
-				if (self.task == "Home"):
+				if (self.task == "Home") or (goal_id == 0):
 					# Just go straight since you're at home
 					turn_list.append(self.yaw)
 				else:
@@ -230,7 +231,7 @@ class graph2path:
 		return
 
 	def start(self):
-		rate = rospy.Rate(self.rate) # 50Hz
+		rate = rospy.Rate(self.rate)
 		while not rospy.is_shutdown():
 			rate.sleep()
 			turn_list = []

@@ -99,25 +99,31 @@ class wfi_centering_controller:
 			self.cloud_get = False
 
 			# Convert pc2 msg to a python list
-			points = []
-			for p in pc2.read_points(self.pc2_data, field_names = ("x", "y", "z"), skip_nans=True):
-				points.append([p[0], p[1], p[2]])
-			points = np.array(points)
+			cloud = pc2.read_points(self.pc2_data, field_names = ("x", "y", "z"), skip_nans=True)
+			points = np.asarray(list(cloud))
 
 			# Convert depth cloud to spherical coordinates and take only the points with the smallest magnitude elevation
 			points_spherical = cartesian2spherical(points)
 
-			# Filter points based on elevation
-			self.points_filtered = np.empty([0,3])
-			for p in points_spherical:
-				if (p[1] < (0.04)) and (p[1] > (0.0)):
-					self.points_filtered = np.vstack((self.points_filtered, [p[0], p[1], p[2]]))
+			# Take the max depth at the current azimuth (n_elev points at each azimuth ordered in ascending azimuth)
+			n_elev = 15
+			num_points, _ = np.shape(points_spherical)
+			# print(num_points)
+			self.points_filtered = np.empty([num_points/n_elev,2])
+			for i in range(num_points/n_elev):
+				# print(points_spherical[(n_elev*i):(n_elev*i+n_elev),2])
+				self.points_filtered[i,0] = np.amax(points_spherical[(n_elev*i):(n_elev*i+n_elev),0])
+				self.points_filtered[i,1] = points_spherical[n_elev*i,2]
 
-
+			# self.points_filtered = np.empty([0,3])
+			# for p in points_spherical:
+			# 	print(p)
+			# 	if (p[1] < (0.04)) and (p[1] > (0.0)):
+			# 		self.points_filtered = np.vstack((self.points_filtered, [p[0], p[1], p[2]]))
 
 		# Extract depth and azimuth from filtered PointClouds
 		self.d = self.points_filtered[:,0]
-		self.az = self.points_filtered[:,2]
+		self.az = self.points_filtered[:,1]
 
 		# Calculate the nearness
 		near = 1/self.d
@@ -181,7 +187,7 @@ class wfi_centering_controller:
 			if (self.cloud_get_first):
 				self.wideFieldIntegration()
 				# Run a junction detector on a fifth of the loops
-				if not (loops % 5):
+				if not (loops % 20):
 					self.detectJunctions()
 				loops = loops + 1
 				# Turn around at dead ends
@@ -191,7 +197,7 @@ class wfi_centering_controller:
 						print("Dead end detected.  Turning around.")
 						self.cmd_vel.angular.z = np.sign(self.junction_headings[0])*self.yaw_rate_max
 						print("Yaw rate = %0.2f deg/s" % (self.cmd_vel.angular.z*(180/np.pi)))
-						self.cmd_vel.linear.x = self.u0/5.0
+						self.cmd_vel.linear.x = -self.u0/5.0
 
 			# Saturate the turn rate command
 			if (np.absolute(self.cmd_vel.angular.z) >= self.yaw_rate_max):
