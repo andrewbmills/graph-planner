@@ -33,10 +33,10 @@ class GraphSolver:
 		
 		#Base Case : If j is source 
 		if parent[j] == -1 : 
-			print j, 
+			print(j)
 			return
 		self.printPath(parent , parent[j]) 
-		print j, 
+		print(j)
 		
 
 	# A utility function to print 
