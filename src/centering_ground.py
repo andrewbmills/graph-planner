@@ -106,14 +106,17 @@ class wfi_centering_controller:
 			points_spherical = cartesian2spherical(points)
 
 			# Take the max depth at the current azimuth (n_elev points at each azimuth ordered in ascending azimuth)
-			n_elev = 15
-			num_points, _ = np.shape(points_spherical)
-			# print(num_points)
-			self.points_filtered = np.empty([num_points/n_elev,2])
-			for i in range(num_points/n_elev):
-				# print(points_spherical[(n_elev*i):(n_elev*i+n_elev),2])
-				self.points_filtered[i,0] = np.amax(points_spherical[(n_elev*i):(n_elev*i+n_elev),0])
-				self.points_filtered[i,1] = points_spherical[n_elev*i,2]
+			try:
+				n_elev = 15
+				num_points, _ = np.shape(points_spherical)
+				# print(num_points)
+				self.points_filtered = np.empty([int(np.floor(num_points/n_elev)),2])
+				for i in range(int(np.floor(num_points/n_elev))):
+					# print(points_spherical[(n_elev*i):(n_elev*i+n_elev),2])
+					self.points_filtered[i,0] = np.amax(points_spherical[(n_elev*i):(n_elev*i+n_elev),0])
+					self.points_filtered[i,1] = points_spherical[n_elev*i,2]
+			except:
+				return
 
 			# self.points_filtered = np.empty([0,3])
 			# for p in points_spherical:
