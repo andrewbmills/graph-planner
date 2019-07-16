@@ -150,10 +150,10 @@ class wfi_centering_controller:
 
 	def __init__(self):
 		# Set controller specific parameters
-		self.u0 = float(rospy.get_param("/centering/speed", 0.8)) # m/s
-		self.rate = float(rospy.get_param("/centering/rate", 10.0)) # Hz
-		self.show_plot = bool(rospy.get_param("/centering/plot", False)) # Bool
-		self.min_peak_height = float(rospy.get_param("/centering/min_peak_height", 10.0)) # meters
+		self.u0 = float(rospy.get_param("centering/speed", 0.8)) # m/s
+		self.rate = float(rospy.get_param("centering/rate", 10.0)) # Hz
+		self.show_plot = bool(rospy.get_param("centering/plot", False)) # Bool
+		self.min_peak_height = float(rospy.get_param("centering/min_peak_height", 10.0)) # meters
 
 		# Initialize ROS node and Subscribers
 		node_name = 'centering_controller'

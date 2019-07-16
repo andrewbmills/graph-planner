@@ -47,7 +47,7 @@ class VelocitySwitcher:
 	def __init__(self):
 		node_name = "cmd_vel_switch"
 		rospy.init_node(node_name)
-		self.rate = float(rospy.get_param("/cmd_vel_switch/rate", 1.0))
+		self.rate = float(rospy.get_param("cmd_vel_switch/rate", 1.0))
 
 		# Subscribers
 		rospy.Subscriber("cmd_vel_1", Twist, self.getVel1)

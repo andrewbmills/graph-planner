@@ -426,18 +426,18 @@ class node_skeleton:
 		# Initialize ROS node and Subscribers
 		node_name = 'node_skeleton'
 		rospy.init_node(node_name)
-		self.rate = float(rospy.get_param("/map2graph/rate", 5.0))
+		self.rate = float(rospy.get_param("map2graph/rate", 5.0))
 
 		# Read params to see if the map is an OctoMap or a Voxblox
 		# self.mapType = "Voxblox"
-		self.mapType = str(rospy.get_param("/map2graph/mapType", "Voxblox"))
-		self.voxel_size = float(rospy.get_param("/map2graph/resolution", 0.2))
-		self.num_slices = int(rospy.get_param("/map2graph/num_slices", 1))
-		self.plot_on = bool(rospy.get_param("/map2graph/plotting", True))
-		self.plot_steps = bool(rospy.get_param("/map2graph/plot_steps", False))
-		self.time_msgs = bool(rospy.get_param("/map2graph/time_msgs", False))
-		map_blur = float(rospy.get_param("/map2graph/map_blur", 5.0))
-		map_thresh = float(rospy.get_param("/map2graph/map_threshold", 0.4))
+		self.mapType = str(rospy.get_param("map2graph/mapType", "Voxblox"))
+		self.voxel_size = float(rospy.get_param("map2graph/resolution", 0.2))
+		self.num_slices = int(rospy.get_param("map2graph/num_slices", 1))
+		self.plot_on = bool(rospy.get_param("map2graph/plotting", True))
+		self.plot_steps = bool(rospy.get_param("map2graph/plot_steps", False))
+		self.time_msgs = bool(rospy.get_param("map2graph/time_msgs", False))
+		map_blur = float(rospy.get_param("map2graph/map_blur", 5.0))
+		map_thresh = float(rospy.get_param("map2graph/map_threshold", 0.4))
 
 		# Subscribers
 		# rospy.Subscriber('X1/odometry', Odometry, self.getPosition)

@@ -70,8 +70,8 @@ class GraphMsgPlotter:
 	def __init__(self):
 		node_name = "graphmsg2rviz"
 		rospy.init_node(node_name)
-		self.rate = float(rospy.get_param("/graphmsg2rviz/rate", 5.0))
-		self.fixed_frame = str(rospy.get_param("/graphmsg2rviz/fixed_frame", "world"))
+		self.rate = float(rospy.get_param("graphmsg2rviz/rate", 5.0))
+		self.fixed_frame = str(rospy.get_param("graphmsg2rviz/fixed_frame", "world"))
 
 		# Subscribers
 		rospy.Subscriber("graph", Graph, self.getGraph)
