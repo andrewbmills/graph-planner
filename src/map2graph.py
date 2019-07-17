@@ -194,12 +194,15 @@ class node_skeleton:
 				# print(np.shape(child_id))
 				# print(dist)
 				# print(np.shape(dist))
-				edge['child'] = child_id[0][0]
-				edge['path'] = np.array(path)
-				neighbors.append(child_id[0][0])
-				# print(edge)
-				edges.append(edge)
-				edge_id = edge_id + 1
+				try:
+					edge['child'] = child_id[0][0]
+					edge['path'] = np.array(path)
+					neighbors.append(child_id[0][0])
+					# print(edge)
+					edges.append(edge)
+					edge_id = edge_id + 1
+				except:
+					continue # Edge doesn't go anywhere
 
 			# print("neighbors = ")
 			# print(neighbors)
