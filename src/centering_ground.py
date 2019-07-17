@@ -4,7 +4,7 @@ import numpy as np
 import rospy
 import matplotlib.pyplot as plt
 from scipy import signal
-from std_msgs.msg import Int32
+from std_msgs.msg import *
 from geometry_msgs.msg import *
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import PointCloud2
@@ -166,6 +166,7 @@ class wfi_centering_controller:
 		self.pub1 = rospy.Publisher('cmd_vel', Twist, queue_size=10)
 		self.pub2 = rospy.Publisher('junction_count', Int32, queue_size=10)
 		self.pub3 = rospy.Publisher('junction_directions', PoseArray, queue_size=10)
+		self.pub4 = rospy.Publisher('dead_end_detected', Bool, queue_size=10)
 
 		# Initialize twist object for publishing
 		self.cmd_vel = Twist()
@@ -174,6 +175,10 @@ class wfi_centering_controller:
 		self.junction_count = Int32()
 		self.junction_count.data = 0
 		self.junction_directions = PoseArray()
+
+		# Dead End Detected msg
+		self.dead_end_msg = Bool()
+		self.dead_end_msg.data = False
 
 		# Controller tuning
 		self.K1 = 0.0141421
@@ -190,15 +195,19 @@ class wfi_centering_controller:
 			if (self.cloud_get_first):
 				self.wideFieldIntegration()
 				# Run a junction detector on a fifth of the loops
-				if not (loops % 20):
+				if not (loops % 5):
 					self.detectJunctions()
 				loops = loops + 1
 				# Turn around at dead ends
-				if self.junction_count.data == 1:
-					# Turn until you're facing the only junction_direction
-					if abs(self.junction_headings[0]) > 45*np.pi/180:
+				if len(self.junction_headings)>0:
+					min_angle_abs = np.amin(np.abs(self.junction_headings))
+					min_id = np.argmin(np.abs(self.junction_headings))
+					print("min angle = %0.2f deg" % (np.amin(np.abs(self.junction_headings))*180.0/np.pi))
+					if min_angle_abs > (60*np.pi/180): # No corridors in the front +/- 45 deg
+						# Turn until you're facing a junction_direction
 						print("Dead end detected.  Turning around.")
-						self.cmd_vel.angular.z = np.sign(self.junction_headings[0])*self.yaw_rate_max
+						self.dead_end_msg.data = True
+						self.cmd_vel.angular.z = np.sign(self.junction_headings[min_id])*self.yaw_rate_max
 						print("Yaw rate = %0.2f deg/s" % (self.cmd_vel.angular.z*(180/np.pi)))
 						self.cmd_vel.linear.x = -self.u0/5.0
 
@@ -208,6 +217,7 @@ class wfi_centering_controller:
 			self.pub1.publish(self.cmd_vel)
 			self.pub2.publish(self.junction_count)
 			self.pub3.publish(self.junction_directions)
+			self.pub4.publish(self.dead_end_msg)
 		return
 
 if __name__ == '__main__':

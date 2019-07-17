@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <!-- Switch from centering command to graph planner -->
   <node pkg="graph-planner" type="junction_twistmsg_switch.py" name="cmd_vel_switch" output="screen">

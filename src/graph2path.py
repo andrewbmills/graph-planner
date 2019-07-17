@@ -257,7 +257,6 @@ class graph2path:
 				if (self.at_a_node.data):
 					print("Robot is at a node.  Turn to %0.2f deg.  Current heading is %0.2f deg" % ((180/np.pi)*turn_list[0], (180/np.pi)*self.yaw))
 					self.setTurnCommand(turn_list[0])
-					self.pub3.publish(self.turn_command)
 				else:
 					if (len(turn_list) > 1):
 						print("Next turn is %0.2f deg at node %d." % ((180/np.pi)*turn_list[1], node_list[1]))
@@ -267,11 +266,14 @@ class graph2path:
 				self.setPoseMsg(np.array([self.yaw, 0.0, 0.0]))
 				print("The robot has left from a node with an unexplored edge.  Will update command at next junction.")
 				self.next_turn.data = self.yaw
+				self.setTurnCommand(self.yaw)
+
 			self.pub2.publish(self.next_turn)
 			self.pub4.publish(self.next_turn_pose)
 			self.setPoseArrayMsg(node_list, turn_list)
 			self.pub5.publish(self.turn_list_poses)
 			self.pub1.publish(self.at_a_node)
+			self.pub3.publish(self.turn_command)
 		return
 
 	def __init__(self):

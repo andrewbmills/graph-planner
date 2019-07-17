@@ -1,13 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <!-- Centering controller node -->
   <node pkg="graph-planner" type="centering_ground.py" name="centering" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
     <!-- LiDAR Data -->
-    <remap from="points" to="/X1/points_filtered"/>
+    <remap from="points" to="/X1/points"/>
 
     <!-- Outputs (Published Topic Names) -->
     <!-- Twist Command -->
     <remap from="cmd_vel" to="/X1/cmd_vel_centering"/>
+
+    <!-- Dead End Boolean -->
+    <remap from="dead_end_detected" to="node_skeleton/dead_end_detected"/>
 
     <!-- Parameters -->
     <!-- Forward speed in m/s -->

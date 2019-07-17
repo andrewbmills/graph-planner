@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
   <!-- <node pkg="rosbag" type="play" name="bag_player" args="~/Downloads/Junction_Finding_Bags/heidi-6-26-19/test3_downback_wfi_map.bag"/> -->
 
@@ -25,14 +26,17 @@
     <!-- <param name="mapType" value="Octomap"/> -->
 
     <!-- Update rate in (Hz) -->
-    <param name="rate" value="1.0"/>
+    <param name="rate" value="3.0"/>
 
     <!-- Number of voxel_size vertical slices to integrate into the 2D map representation for skeletonization -->
     <param name="num_slices" value="1"/>
 
     <!-- "plotting" is whether or not to output the full result maplotlib plot.  "plot_steps" is for debugging -->
     <param name="plotting" value="1"/>
-    <param name="plot_steps" value="1"/>
+    <param name="plot_steps" value="0"/>
+
+    <!-- Output timings for benchmarking -->
+    <param name="time_msgs" value = "0"/>
 
     <!-- Gaussian kernel parameters for blurring the 2D occupancy grid -->
     <param name="map_blur" value="5.0"/>

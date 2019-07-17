@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
 <!-- Graph construction node -->
   <node name="gbm_node" pkg="gbm_pkg" type="gbm_node"  output="screen">
@@ -6,8 +7,9 @@
     <!-- <remap from="odometry" to="/jackal_odom"/> -->
     
     <!-- Node skeleton output topics -->
-    <remap from="closest_node" to="/node_skeleton/closest_node"/>
-    <remap from="edge_list" to="/node_skeleton/closest_edges"/>
+    <remap from="closest_node" to="node_skeleton/closest_node"/>
+    <remap from="edge_list" to="node_skeleton/closest_edges"/>
+    <remap from="dead_end_flag" to="node_skeleton/dead_end_detected"/>
 
     <!-- Custom graph msg -->
     <remap from="graph" to="node_skeleton/graph"/>
@@ -17,6 +19,7 @@
     <param name="sRadius" value="3.0"/>
     <param name="rRadius" value="3.0"/>
     <param name="eRadius" value="0.7"/>
+    <param name="dRadius" value="0.25"/>
     <param name="logFilePath" value ="/home/andrew/catkin_ws/src/gbm_pkg/logs/mission_log.txt"/>
   </node>
 
