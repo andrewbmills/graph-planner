@@ -2,6 +2,7 @@
 import sys
 import numpy as np
 import rospy
+import copy
 from std_msgs.msg import *
 from geometry_msgs.msg import *
 from nav_msgs.msg import *
@@ -61,6 +62,9 @@ class graph2path:
 
 	def getGraph(self, data): # Graph subscriber callback function
 		self.first_graph_msg = True
+		self.graphmsg = data
+
+	def readGraph(self, data):
 		self.node_position_list = []
 		# Generates an adjacency graph (numpy 2d array) from Graph.msg data
 		n = data.size
@@ -252,6 +256,8 @@ class graph2path:
 			rate.sleep()
 			turn_list = []
 			if (self.first_graph_msg):
+				# Convert graph msg from callback into readable data
+				self.readGraph(copy.deepcopy(self.graphmsg))
 				if (self.task == "Home_slow"):
 					node_list, turn_list = self.pathHome()
 					print("Robot is heading home now.")
@@ -318,6 +324,7 @@ class graph2path:
 		self.current_node_position = Point()
 		self.yaw = 0.0
 		self.task = "Explore"
+		self.graphmsg = Graph()
 		# self.task = "Home"
 		# self.task = "Home_slow"
 
