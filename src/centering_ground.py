@@ -203,6 +203,7 @@ class wfi_centering_controller:
 					min_angle_abs = np.amin(np.abs(self.junction_headings))
 					min_id = np.argmin(np.abs(self.junction_headings))
 					print("min angle = %0.2f deg" % (np.amin(np.abs(self.junction_headings))*180.0/np.pi))
+					self.dead_end_msg.data = False;
 					if min_angle_abs > (60*np.pi/180): # No corridors in the front +/- 45 deg
 						# Turn until you're facing a junction_direction
 						print("Dead end detected.  Turning around.")

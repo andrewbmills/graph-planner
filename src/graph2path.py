@@ -65,11 +65,11 @@ class graph2path:
 		for node in data.node:
 			i = int(node.id)
 			self.node_position_list.append(node.position)
-			for edge_num in range(node.nExploredEdge):
+			for edge_num in range(len(node.neighborId)):
 				j = node.neighborId[edge_num]
 				cost = node.edgeCost[edge_num]
 				angle = node.exploredEdge[edge_num]
-				if (self.A[i,j,0] == 0) or (cost < self.A[i,j,0]):
+				if (self.A[i,j,0] < 0.01) or (cost < self.A[i,j,0]):
 					self.A[i,j,0] = cost
 					self.A[i,j,1] = angle
 			if node.nUnexploredEdge:
@@ -251,7 +251,7 @@ class graph2path:
 				rospy.loginfo("Waiting for first graph message")
 				continue
 
-			if turn_list:
+			if (len(turn_list)>0):
 				self.next_turn.data = turn_list[0]
 				self.setPoseMsg(np.array([turn_list[0], 0.0, 0.0]))
 				if (self.at_a_node.data):
@@ -265,7 +265,7 @@ class graph2path:
 			else:
 				self.setPoseMsg(np.array([self.yaw, 0.0, 0.0]))
 				print("The robot has left from a node with an unexplored edge.  Will update command at next junction.")
-				self.next_turn.data = self.yaw
+				self.next_turn.data = -10.0
 				self.setTurnCommand(self.yaw)
 
 			self.pub2.publish(self.next_turn)
