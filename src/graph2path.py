@@ -35,6 +35,10 @@ def euler2quaternion(euler):
 	q[3] = s[0]*c[1]*c[2]-c[0]*s[1]*s[2]
 	return q
 
+def check_symmetric(a, rtol=1e-05, atol=1e-08):
+	# Checks if a matrix is close to symmetric given the relative and absolute tolerances
+    return np.allclose(a, a.T, rtol=rtol, atol=atol)
+
 class graph2path:
 	def maintainCrumbs(self, new_id):
 		# This function finds the last time the current id occured in the breadcrumb list
@@ -60,7 +64,7 @@ class graph2path:
 		self.node_position_list = []
 		# Generates an adjacency graph (numpy 2d array) from Graph.msg data
 		n = data.size
-		self.A = np.zeros((n,n,2)) # Adjacency matrix (First nxn is costs and second one is angles)
+		Adj = np.zeros((n,n,2)) # Adjacency matrix (First nxn is costs and second one is angles)
 		self.unexplored_edges = [] # a (p x e+1) list of unexplored edges.  Column 1 is the node id and columns 2 to e+1 are the edge angles
 		for node in data.node:
 			i = int(node.id)
@@ -69,15 +73,20 @@ class graph2path:
 				j = node.neighborId[edge_num]
 				cost = node.edgeCost[edge_num]
 				angle = node.exploredEdge[edge_num]
-				if (self.A[i,j,0] < 0.01) or (cost < self.A[i,j,0]):
-					self.A[i,j,0] = cost
-					self.A[i,j,1] = angle
+				if (Adj[i,j,0] < 0.01) or (cost < Adj[i,j,0]):
+					Adj[i,j,0] = cost
+					Adj[i,j,1] = angle
 			if node.nUnexploredEdge:
 				self.unexplored_edges.append([i, node.unexploredEdge])
 
 		self.current_node = data.currentNodeId
 		self.current_node_position = data.node[self.current_node].position
 		self.current_edge = data.currentEdge
+
+		self.A = np.copy(Adj)
+		if not check_symmetric(self.A[:,:,0]):
+			print("A is not symmetric, printing graph msg:")
+			print(data)
 
 		# Add the current node to the history of nodes if it's different than the last added
 		if (self.node_history):
@@ -95,14 +104,16 @@ class graph2path:
 		return
 
 	def findPath(self):
-		n = len(self.A)
+		# Copy adjacency matrix
+		Adj = np.copy(self.A)
+		n = len(Adj)
 		print("current node %d" % (self.current_node))
 		node_list = []
 		turn_list = []
 		if (n>1):
-			print(self.A[:,:,0])
+			print(Adj[:,:,0])
 			g = GraphSolver()
-			parent, dist = g.dijkstra(self.A[:,:,0], self.current_node)
+			parent, dist = g.dijkstra(Adj[:,:,0], self.current_node)
 		else:
 			print("Less than two nodes in the graph.")
 			return [], []
@@ -141,8 +152,8 @@ class graph2path:
 
 
 		if (len(node_list) > 1):
-			turn_list = self.turns(node_list)
-			arriving_angle = wrapToPi(self.A[node_list[-1], node_list[-2], 1] + np.pi)
+			turn_list = self.turns(node_list, Adj)
+			arriving_angle = wrapToPi(Adj[node_list[-1], node_list[-2], 1] + np.pi)
 			if (self.task == "Home") or (goal_id == 0):
 				# Just go straight when you get home
 				turn_list.append(arriving_angle)
@@ -175,10 +186,10 @@ class graph2path:
 
 		return node_list, turn_list
 
-	def turns(self, node_list):
+	def turns(self, node_list, Adj):
 		turn_list = []
 		for i in range(len(node_list)-1):
-			turn = self.A[node_list[i], node_list[i+1], 1]
+			turn = Adj[node_list[i], node_list[i+1], 1]
 			if turn == 0:
 				rospy.logwarn("Planned path contained unconnected nodes")
 				turn_list = []
@@ -198,8 +209,10 @@ class graph2path:
 		return
 
 	def pathHome(self):
+		# Copy adjacency matrix
+		Adj = np.copy(self.A)
 		node_list = self.breadcrumb.reverse()
-		turn_list = self.turns(node_list)
+		turn_list = self.turns(node_list, Adj)
 		return node_list, turn_list
 
 	def setPoseMsg(self, euler):
@@ -217,17 +230,20 @@ class graph2path:
 		self.turn_list_poses = PoseArray()
 		self.turn_list_poses.header.stamp = rospy.Time.now()
 		self.turn_list_poses.header.frame_id = self.fixed_frame
-		if (not nodes) or (not turns):
+		if (len(nodes) < 1) or (len(turns) < 1):
 			return
 		for i in range(len(nodes)):
-			newPose = Pose()
-			newPose.position = self.node_position_list[nodes[i]]
-			q = euler2quaternion(np.array([turns[i], 0.0, 0.0]))
-			newPose.orientation.w = q[0]
-			newPose.orientation.x = q[1]
-			newPose.orientation.y = q[2]
-			newPose.orientation.z = q[3]
-			self.turn_list_poses.poses.append(newPose)
+			try:
+				newPose = Pose()
+				newPose.position = self.node_position_list[nodes[i]]
+				q = euler2quaternion(np.array([turns[i], 0.0, 0.0]))
+				newPose.orientation.w = q[0]
+				newPose.orientation.x = q[1]
+				newPose.orientation.y = q[2]
+				newPose.orientation.z = q[3]
+				self.turn_list_poses.poses.append(newPose)
+			except:
+				continue
 		return
 
 	def start(self):
