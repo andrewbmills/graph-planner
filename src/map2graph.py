@@ -254,8 +254,13 @@ class node_skeleton:
 			y_max = np.amax(points[:,1])
 			y_size = int(np.round((y_max - y_min)/self.voxel_size)) + 1 + 2*self.img_pad
 		except:
+			x_min = 0
+			x_size = 0
+			y_min = 0
+			y_size = 0
+			img = -1
 			rospy.logwarn("PointCloud2 msg is empty.")
-			return
+			return img, x_min, y_min, x_size, y_size
 		if (self.time_msgs):				
 			print("--- %0.2f ms: Finding x and y extrema ---" % ((time.time() - start_time)*1000.0))
 
@@ -314,6 +319,10 @@ class node_skeleton:
 				img, x_min, y_min, x_size, y_size, yaw_origin = self.occGrid2Img()
 				if (self.time_msgs):
 					print("--- %0.2f ms: Reading Occupancy Grid message ---" % ((time.time() - start_time)*1000.0))
+
+			if (x_size == 0): # Some error occurred
+				rospy.logwarn("Waiting for a map with data")
+				return
 
 			# Gaussian blur timing start
 			if (self.time_msgs):
@@ -544,11 +553,11 @@ class node_skeleton:
 		self.img_pad = 4 # pad the img with occupied cells for neighborhood operations
 
 	def start(self):
-		# rate = rospy.Rate(self.rate)
+		rate = rospy.Rate(self.rate)
 		# if (self.time_msgs):
 		# start_time = time.time()
 		while not rospy.is_shutdown():
-			# rate.sleep()
+			rate.sleep()
 			# if (self.time_msgs):
 			# print("--- %0.2f ms: Full node loop ---" % ((time.time() - start_time)*1000.0))
 			# start_time = time.time()
