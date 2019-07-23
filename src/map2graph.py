@@ -64,6 +64,12 @@ class node_skeleton:
 		self.cloud_get_first = True
 		return
 
+	def getOccupancyGrid(self, data): # nav_msgs/OccupancyGrid Subscriber
+		self.occupancy_grid_msg = data
+		self.cloud_get = True
+		self.cloud_get_first = True
+		return
+
 	def filterNodes(self, nodes):
 		# Filter out redundant nodes
 		rows, cols = np.shape(nodes)
@@ -211,74 +217,116 @@ class node_skeleton:
 
 		return nodes, nodes_end, edges
 
-	def cloud2img(self):
-		if (self.cloud_get):
-			self.cloud_get = False
-			if (self.time_msgs):
-				start_time = time.time()
+	def cloud2Img(self):
+		self.cloud_get = False
+		if (self.time_msgs):
+			start_time = time.time()
+		if (self.mapType == "Octomap"):
+			# Convert pc2 msg to a python list (this is the free cells vis array)
+			cloud = pc2.read_points(self.pc2_data, field_names = ("x", "y", "z"), skip_nans=True)
+			points = np.asarray(list(cloud))
+
+		if (self.mapType == "Voxblox"):
+			# Convert pc2 msg to a python list (this is the free cells vis array)
+			cloud = pc2.read_points(self.pc2_data, field_names = ("x", "y", "z", "intensity"), skip_nans=True)
+			# points = np.fromiter(chain.from_iterable(cloud), 'f', self.pc2_data.width*4)
+			# points.shape = (self.pc2_data.width, 4)
+			# points = np.fromiter(cloud, [('', 'f'), ('', 'f'), ('', 'f'), ('', 'f')], count=self.pc2_data.width)
+			points = np.asarray(list(cloud))
+
+		if (self.mapType == "OccupancyGrid"):
+			# Read in Occupancy Grid message data and store it to a numpy array
+			x_min = self.occupancy_grid_data.info.origin.position.x
+			y_min = self.occupancy_grid_data.info.origin.position.y
+
+		if (self.time_msgs):
+			print(np.shape(points))
+			print("--- %0.2f ms: Reading map data ---" % ((time.time() - start_time)*1000.0))
+
+		# Find the x and y extrema
+		if (self.time_msgs):
+			start_time = time.time()
+		try:
+			x_min = np.amin(points[:,0])
+			x_max = np.amax(points[:,0])
+			x_size = int(np.round((x_max - x_min)/self.voxel_size)) + 1 + 2*self.img_pad
+			y_min = np.amin(points[:,1])
+			y_max = np.amax(points[:,1])
+			y_size = int(np.round((y_max - y_min)/self.voxel_size)) + 1 + 2*self.img_pad
+		except:
+			rospy.logwarn("PointCloud2 msg is empty.")
+			return
+		if (self.time_msgs):				
+			print("--- %0.2f ms: Finding x and y extrema ---" % ((time.time() - start_time)*1000.0))
+
+		# Restrict points to just the z_slice neighborhood
+		if (self.time_msgs):
+			start_time = time.time()
+
+		slice_indices = np.logical_and(np.less(points[:,2], self.position.z + self.num_slices*self.voxel_size/2.0), np.greater(points[:,2], self.num_slices*self.position.z - self.voxel_size/2.0))
+		points = points[slice_indices,:]
+
+		# Write the slice to an image
+		img = np.zeros(shape=[int(x_size), int(y_size)])
+		for p in points:
+			x_idx = int(np.round((p[0] - x_min)/self.voxel_size)) + self.img_pad
+			y_idx = int(np.round((p[1] - y_min)/self.voxel_size)) + self.img_pad
 			if (self.mapType == "Octomap"):
-				# Convert pc2 msg to a python list (this is the free cells vis array)
-				cloud = pc2.read_points(self.pc2_data, field_names = ("x", "y", "z"), skip_nans=True)
-				points = np.asarray(list(cloud))
-
+				img[x_idx, y_idx] = 1
 			if (self.mapType == "Voxblox"):
-				# Convert pc2 msg to a python list (this is the free cells vis array)
-				cloud = pc2.read_points(self.pc2_data, field_names = ("x", "y", "z", "intensity"), skip_nans=True)
-				# points = np.fromiter(chain.from_iterable(cloud), 'f', self.pc2_data.width*4)
-				# points.shape = (self.pc2_data.width, 4)
-				# points = np.fromiter(cloud, [('', 'f'), ('', 'f'), ('', 'f'), ('', 'f')], count=self.pc2_data.width)
-				points = np.asarray(list(cloud))
+				img[x_idx, y_idx] = p[3]
 
-			if (self.time_msgs):
-				print(np.shape(points))
-				print("--- %0.2f ms: Reading map data ---" % ((time.time() - start_time)*1000.0))
+		if (self.time_msgs):
+			print("--- %0.2s ms: Map conversion to img  ---" % ((time.time() - start_time)*1000.0))
 
-			# Find the x and y extrema
-			if (self.time_msgs):
-				start_time = time.time()
-			try:
-				x_min = np.amin(points[:,0])
-				x_max = np.amax(points[:,0])
-				x_size = int(np.round((x_max - x_min)/self.voxel_size)) + 1 + 2*self.img_pad
-				y_min = np.amin(points[:,1])
-				y_max = np.amax(points[:,1])
-				y_size = int(np.round((y_max - y_min)/self.voxel_size)) + 1 + 2*self.img_pad
-			except:
-				rospy.logwarn("PointCloud2 msg is empty.")
-				return
-			if (self.time_msgs):				
-				print("--- %0.2f ms: Finding x and y extrema ---" % ((time.time() - start_time)*1000.0))
+		return img, x_min, y_min, x_size, y_size
 
-			# Restrict points to just the z_slice neighborhood
-			if (self.time_msgs):
-				start_time = time.time()
+	def occGrid2Img(self):
+		# Read size and origin parameters
+		x_min = self.occupancy_grid_msg.info.origin.position.x
+		y_min = self.occupancy_grid_msg.info.origin.position.y
+		x_size = self.occupancy_grid_msg.info.width
+		y_size = self.occupancy_grid_msg.info.height
+		q = self.occupancy_grid_msg.info.origin.orientation
+		yaw_origin = np.arctan2(2.0*(q.w*q.z + q.x*q.y), 1.0 - 2.0*(q.y*q.y + q.z*q.z))
 
-			slice_indices = np.logical_and(np.less(points[:,2], self.position.z + self.num_slices*self.voxel_size/2.0), np.greater(points[:,2], self.num_slices*self.position.z - self.voxel_size/2.0))
-			points = points[slice_indices,:]
+		# Read the map data
+		img = np.array(self.occupancy_grid_msg.data).reshape((self.occupancy_grid_msg.info.height, self.occupancy_grid_msg.info.width))
+		img[np.equal(img, -1)] = 100
+		img = np.transpose(img.astype(float))/100.0
+		img = 1.0 - img
 
-			# Write the slice to an image
-			img = np.zeros(shape=[int(x_size), int(y_size)])
-			for p in points:
-				x_idx = int(np.round((p[0] - x_min)/self.voxel_size)) + self.img_pad
-				y_idx = int(np.round((p[1] - y_min)/self.voxel_size)) + self.img_pad
-				if (self.mapType == "Octomap"):
-					img[x_idx, y_idx] = 1
-				if (self.mapType == "Voxblox"):
-					img[x_idx, y_idx] = p[3]
+		# Pad img with self.img_pad worth of occupied pixels
+		img = np.pad(img, self.img_pad, 'constant')
 
-			if (self.time_msgs):
-				print("--- %0.2s ms: Map conversion to img  ---" % ((time.time() - start_time)*1000.0))
+
+		return img, x_min, y_min, x_size, y_size, yaw_origin
+
+	def cloud2graph(self):
+		if (self.cloud_get):
+			if (self.mapType == "Octomap") or (self.mapType == "Voxblox"):
+				img, x_min, y_min, x_size, y_size = self.cloud2Img()
+				yaw_origin = 0.0
+
+			if (self.mapType == "OccupancyGrid"):
+				if (self.time_msgs):
+					start_time = time.time()
+				img, x_min, y_min, x_size, y_size, yaw_origin = self.occGrid2Img()
+				if (self.time_msgs):
+					print("--- %0.2f ms: Reading Occupancy Grid message ---" % ((time.time() - start_time)*1000.0))
+
 			# Gaussian blur timing start
 			if (self.time_msgs):
 				start_time = time.time()
-			# logical threshold the image for skeletonization
-			if (self.mapType == "Octomap"):
-				# Gaussian blur the image
-				img_blur = cv2.GaussianBlur(img, (self.blur_size, self.blur_size), self.blur_sigma, borderType=1)
+			
 			if (self.mapType == "Voxblox"):
 				# Gaussian blur the image
 				img_blur = cv2.GaussianBlur(img, (self.blur_size, self.blur_size), self.blur_sigma)
+			else:
+				# Occupancy Grid, gaussian blur the image
+				img_blur = cv2.GaussianBlur(img, (self.blur_size, self.blur_size), self.blur_sigma, borderType=1)
 
+			# logical threshold the image for skeletonization
 			occGrid = np.less(img_blur, self.thresh)
 
 			if (self.time_msgs):
@@ -311,10 +359,10 @@ class node_skeleton:
 			# skel = np.less(skel, 0.5)
 
 			# Python's skimage library
-			# skel = skeletonize(~occGrid)
 			if (self.time_msgs):
 				start_time = time.time()
-			skel = thin(~occGrid)
+			# skel = thin(~occGrid)
+			skel = skeletonize(~occGrid)
 			skel = skel.astype(np.uint16)
 			if (self.time_msgs):
 				print("--- %0.2f ms: Skeletonization ---" % ((time.time() - start_time)*1000.0))
@@ -444,12 +492,14 @@ class node_skeleton:
 
 		# Subscribers
 		# rospy.Subscriber('X1/odometry', Odometry, self.getPosition)
-		rospy.Subscriber('/odometry', Odometry, self.getPosition)
+		rospy.Subscriber('odometry', Odometry, self.getPosition)
 		self.position_get_first = False
 		# rospy.Subscriber('X1/voxblox_node/esdf_pointcloud', PointCloud2, self.getCloud)
-		rospy.Subscriber('/pointcloud', PointCloud2, self.getCloud)
+		rospy.Subscriber('pointcloud', PointCloud2, self.getCloud)
 		self.cloud_get = False
 		self.cloud_get_first = False
+		rospy.Subscriber('occupancy', OccupancyGrid, self.getOccupancyGrid)
+		self.occupancy_grid_msg = OccupancyGrid()
 
 		# Initialize Publisher topics
 		pubTopic = 'node_skeleton/closest_node'
@@ -503,7 +553,7 @@ class node_skeleton:
 			# print("--- %0.2f ms: Full node loop ---" % ((time.time() - start_time)*1000.0))
 			# start_time = time.time()
 			if (self.cloud_get_first and self.position_get_first):
-				self.cloud2img()
+				self.cloud2graph()
 			else:
 				if (self.cloud_get_first == False):
 					rospy.loginfo("map2graph - Waiting for map Pointcloud2 message")
