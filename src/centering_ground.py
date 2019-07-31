@@ -49,8 +49,8 @@ class wfi_centering_controller:
 		return
 
 	def detectJunctions(self):
-		peaks, _ = signal.find_peaks(self.d, height=self.min_peak_height, distance=(int(np.round(len(self.d)/7.0))))
-		# print(peaks)
+		peaks, peak_properties = signal.find_peaks(self.d, height=self.min_peak_height, prominence=self.min_peak_height/2, distance=(int(np.round(len(self.d)/7.0))))
+		# print(peak_properties)
 		self.junction_headings = []
 		self.junction_directions = PoseArray()
 		self.junction_directions.header.frame_id = self.robot_frame
@@ -89,7 +89,7 @@ class wfi_centering_controller:
 			plt.ion()
 			plt.show()
 			plt.plot(self.az, self.d)
-			plt.title('Centering Depth vs azimuth with peaks')
+			plt.title('Centering Depth vs azimuth')
 			plt.pause(0.001)
 		return
 
@@ -204,13 +204,13 @@ class wfi_centering_controller:
 					min_id = np.argmin(np.abs(self.junction_headings))
 					print("min angle = %0.2f deg" % (np.amin(np.abs(self.junction_headings))*180.0/np.pi))
 					self.dead_end_msg.data = False;
-					if min_angle_abs > (60*np.pi/180): # No corridors in the front +/- 45 deg
+					if min_angle_abs > (45*np.pi/180): # No corridors in the front +/- 45 deg
 						# Turn until you're facing a junction_direction
 						print("Dead end detected.  Turning around.")
 						self.dead_end_msg.data = True
 						self.cmd_vel.angular.z = np.sign(self.junction_headings[min_id])*self.yaw_rate_max
 						print("Yaw rate = %0.2f deg/s" % (self.cmd_vel.angular.z*(180/np.pi)))
-						self.cmd_vel.linear.x = -self.u0/5.0
+						self.cmd_vel.linear.x = 0.0
 
 			# Saturate the turn rate command
 			if (np.absolute(self.cmd_vel.angular.z) >= self.yaw_rate_max):

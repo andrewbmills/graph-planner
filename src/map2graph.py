@@ -12,12 +12,11 @@ from std_msgs.msg import MultiArrayDimension
 from nav_msgs.msg import *
 from geometry_msgs.msg import *
 from sensor_msgs.msg import *
-from octomap_msgs.msg import Octomap
 import sensor_msgs.point_cloud2 as pc2
 # My own wrapped thinning function
 import sys
 # sys.path.insert(0, '../include/')
-# import thin_ext as cppthin
+import thin_ext as cppthin
 from skimage.morphology import skeletonize, thin
 # image convolution library
 from scipy import ndimage
@@ -297,9 +296,17 @@ class node_skeleton:
 
 		# Read the map data
 		img = np.array(self.occupancy_grid_msg.data).reshape((self.occupancy_grid_msg.info.height, self.occupancy_grid_msg.info.width))
-		img[np.equal(img, -1)] = 100
-		img = np.transpose(img.astype(float))/100.0
-		img = 1.0 - img
+
+		# Preprocess the data
+		if self.seen_unseen_filter:
+			img = np.transpose(img.astype(float))
+			img_unknown = np.less(img, 60)*np.greater(img,40) + np.equal(img, -1)
+			img[np.greater(img,-0.01)] = 1.0
+			img[img_unknown] = 0.0
+		else:
+			img[np.equal(img,-1)] = 100
+			img = np.transpose(img.astype(float))/100.0
+			img = 1.0 - img
 
 		# Pad img with self.img_pad worth of occupied pixels
 		img = np.pad(img, self.img_pad, 'constant')
@@ -332,8 +339,10 @@ class node_skeleton:
 				# Gaussian blur the image
 				img_blur = cv2.GaussianBlur(img, (self.blur_size, self.blur_size), self.blur_sigma)
 			else:
+				# img = 1.0 - img
 				# Occupancy Grid, gaussian blur the image
 				img_blur = cv2.GaussianBlur(img, (self.blur_size, self.blur_size), self.blur_sigma, borderType=1)
+				# img_blur = 1.0 - img_blur
 
 			# logical threshold the image for skeletonization
 			occGrid = np.less(img_blur, self.thresh)
@@ -354,24 +363,29 @@ class node_skeleton:
 				plt.draw()
 				plt.pause(0.25)
 
+
+			if (self.time_msgs):
+				start_time = time.time()
 			# plt.imshow(occGrid, cmap=plt.cm.gray, interpolation='nearest')
 			# plt.draw()
 
 			# Call thinning c++ function library
 			# Convert the occGrid image into a flattened image of type float
-			# occGrid_img = occGrid.astype(float)
-			# occGrid_img_list = list(occGrid_img.flatten())
-			# rows, cols = np.shape(occGrid)
-			# skel = cppthin.voronoi_thin(occGrid_img_list, rows, cols, self.thinning_type)
-			# skel = np.array(skel)
-			# skel = skel.reshape((rows, cols))
-			# skel = np.less(skel, 0.5)
+			occGrid_img = occGrid.astype(float)
+			occGrid_img_list = list(occGrid_img.flatten())
+			rows, cols = np.shape(occGrid)
+			if (self.time_msgs):
+				start_cpp_time = time.time()
+			skel = cppthin.voronoi_thin(occGrid_img_list, rows, cols, self.thinning_type)
+			if (self.time_msgs):
+				print("--- %0.2f ms: Skeletonization (Cpp only) ---" % ((time.time() - start_cpp_time)*1000.0))
+			skel = np.array(skel)
+			skel = skel.reshape((rows, cols))
+			skel = np.less(skel, 0.5)
 
 			# Python's skimage library
-			if (self.time_msgs):
-				start_time = time.time()
 			# skel = thin(~occGrid)
-			skel = skeletonize(~occGrid)
+			# skel = skeletonize(~occGrid)
 			skel = skel.astype(np.uint16)
 			if (self.time_msgs):
 				print("--- %0.2f ms: Skeletonization ---" % ((time.time() - start_time)*1000.0))
@@ -496,6 +510,7 @@ class node_skeleton:
 		self.plot_on = bool(rospy.get_param("map2graph/plotting", True))
 		self.plot_steps = bool(rospy.get_param("map2graph/plot_steps", False))
 		self.time_msgs = bool(rospy.get_param("map2graph/time_msgs", False))
+		self.seen_unseen_filter = bool(rospy.get_param("map2graph/seen_unseen_filter", False))
 		map_blur = float(rospy.get_param("map2graph/map_blur", 5.0))
 		map_thresh = float(rospy.get_param("map2graph/map_threshold", 0.4))
 
@@ -545,8 +560,8 @@ class node_skeleton:
 
 
 		# Thinning and graph params
-		# self.thinning_type = "guo_hall_fast"
-		self.thinning_type = "guo_hall"
+		self.thinning_type = "guo_hall_fast"
+		# self.thinning_type = "guo_hall"
 		# self.thinning_type = "zhang_suen_fast"
 		# self.thinning_type = "morph"
 
