@@ -6,11 +6,14 @@
   <node pkg="graph-planner" type="map2graph.py" name="map2graph" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
     <!-- <remap from="odometry" to="/jackal_odom"/> -->
-    <remap from="odometry" to="/X1/odometry"/>
+    <!-- <remap from="odometry" to="/X1/odometry"/> -->
+    <remap from="odometry" to="/husky_odom"/>
 
     <!-- Map data in a PointCloud2 msg.  Either an ESDF or Occupancy grid message -->
     <!-- <remap from="pointcloud" to="/octomap_point_cloud_centers_free"/> -->
-    <remap from="pointcloud" to="/X1/voxblox_node/esdf_pointcloud"/>
+    <!-- <remap from="pointcloud" to="/X1/voxblox_node/esdf_pointcloud"/> -->
+    <!-- <remap from="pointcloud" to="/voxblox_node/esdf_pointcloud"/> -->
+    <remap from="occupancy" to="/map"/>
 
     <!-- Outputs (Published Topic Names) -->
     <!-- <remap from="node_skeleton/closest_node" to="/X1/node_skeleton/closest_node"/> -->
@@ -22,8 +25,9 @@
     <param name="voxel_size" value="0.2"/>
 
     <!-- Map type is either Voxblox (ESDF) or Octomap (Occupancy Grid) -->
-    <param name="mapType" value="Voxblox"/>
+    <!-- <param name="mapType" value="Voxblox"/> -->
     <!-- <param name="mapType" value="Octomap"/> -->
+    <param name="mapType" value="OccupancyGrid"/>
 
     <!-- Update rate in (Hz) -->
     <param name="rate" value="3.0"/>
@@ -39,8 +43,8 @@
     <param name="time_msgs" value = "0"/>
 
     <!-- Gaussian kernel parameters for blurring the 2D occupancy grid -->
-    <param name="map_blur" value="5.0"/>
-    <param name="map_threshold" value="1.0"/>
+    <param name="map_blur" value="3.0"/>
+    <param name="map_threshold" value="0.5"/>
   </node>
 
   <!-- Path planner from graph node -->
@@ -76,6 +80,6 @@
     <param name="speed" value="0.7"/>
     
     <!-- Radius for detecting whether or not the robot is at a node -->
-    <param name="node_radius" value="1.5"/>
+    <param name="node_radius" value="1.0"/>
   </node>
 </launch>

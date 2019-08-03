@@ -1,21 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
    <node pkg="graph-planner" type="graph2path.py" name="graph2path" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
     <!-- Graph msg -->
-    <remap from="graph" to="node_skeleton/graph"/>
+    <!-- <remap from="graph" to="demo/node_skeleton/graph"/> -->
     <!-- Odometry msg -->
     <!-- <remap from="odometry" to="/jackal_odom"/> -->
-    <remap from="odometry" to="/X1/odometry"/>
+    <remap from="odometry" to="/husky_odom"/>
     <!-- Set to "Explore" by default.  "Explore" goes to the nearest unexplored edge in the graph.  "Home" goes back to node 0. -->
-    <remap from="task" to="/X1/task"/>
+    <!-- <remap from="task" to="/X1/task"/> -->
     <!-- A Twist msg using a proportional controller to turn to the "next_turn" heading at the next node -->
-    <remap from="cmd_turn_junction" to="/X1/cmd_vel_junction"/>
+    <!-- <remap from="cmd_turn_junction" to="/X1/cmd_vel_junction"/> -->
 
     <!-- Outputs (Published Topic Names) -->
     <!-- True if the vehicle is within node_radius of a node in the graph msg -->
-    <remap from="at_a_node" to="/X1/at_a_node"/>
+    <!-- <remap from="at_a_node" to="/X1/at_a_node"/> -->
     <!-- Yaw angle (in radians) in inertial frame to turn to at the next node/junction -->
-    <remap from="next_turn" to="/X1/next_turn"/>
+    <!-- <remap from="next_turn" to="/X1/next_turn"/> -->
+
+    <!-- Rviz plotting remaps -->
+    <remap from="next_turn_pose" to="node_skeleton/next_turn_pose"/>
+    <remap from="turn_list_poses" to="node_skeleton/turn_list_poses"/>
 
     <!-- Parameters -->
     <!-- Update rate (Hz) -->
@@ -29,23 +34,6 @@
     
     <!-- Radius for detecting whether or not the robot is at a node -->
     <!-- <param name="node_radius" value="3.0"/> -->
-   </node>
-
-   <node pkg="graph-planner" type="junction_twistmsg_switch.py" name="cmd_vel_switch" output="screen">
-    <!-- Inputs (Subscribed Topic Names) -->
-    <!-- First and second command velocities -->
-    <remap from="cmd_vel_1" to="/X1/cmd_vel_centering"/>
-    <remap from="cmd_vel_2" to="/X1/cmd_vel_junction"/>
-    <!-- Whether to stay on cmd_vel_1 (False) or to switch to cmd_vel_2 (True) -->
-    <remap from="switch" to="/X1/at_a_node"/>
-
-    <!-- Outputs (Published Topic Names) -->
-    <!-- The topic to publish cmd_vel_1 or cmd_vel_2 to -->
-    <remap from="cmd_vel" to="/X1/cmd_vel"/>
-
-    <!-- Parameters -->
-    <!-- Update rate (Hz) -->
-    <param name="rate" value="10.0"/>
    </node>
 
 </launch>
