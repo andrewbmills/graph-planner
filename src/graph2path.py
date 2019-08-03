@@ -85,7 +85,6 @@ class graph2path:
 
 		self.current_node = data.currentNodeId
 		self.current_node_position = data.node[self.current_node].position
-		self.current_edge = data.currentEdge
 
 		self.A = np.copy(Adj)
 		if not check_symmetric(self.A[:,:,0]):
@@ -115,7 +114,7 @@ class graph2path:
 		node_list = []
 		turn_list = []
 		if (n>1):
-			print(Adj[:,:,0])
+			# print(Adj[:,:,0])
 			g = GraphSolver()
 			parent, dist = g.dijkstra(Adj[:,:,0], self.current_node)
 		else:
