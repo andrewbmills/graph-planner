@@ -313,9 +313,9 @@ class node_skeleton:
 		y_ind = int(round((self.position.y - y_min)/self.voxel_size))
 		robot_neighborhood = round(self.neighborhood_size/self.voxel_size) # convert to pixels
 		i_min = int(max(x_ind - robot_neighborhood, 0))
-		i_max = int(min(x_ind + robot_neighborhood, y_size))
+		i_max = int(min(x_ind + robot_neighborhood, x_size))
 		j_min = int(max(y_ind - robot_neighborhood, 0))
-		j_max =  int(min(y_ind + robot_neighborhood, x_size))
+		j_max =  int(min(y_ind + robot_neighborhood, y_size))
 		img = img[i_min:i_max, j_min:j_max]
 		x_size, y_size = np.shape(img)
 		x_min = x_min + i_min*self.voxel_size
