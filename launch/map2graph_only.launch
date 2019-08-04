@@ -39,5 +39,8 @@
 
     <!-- Seen vs Unseen filter instead of occGrid -->
     <param name="seen_unseen_filter" value="1"/>
+
+    <!-- Local neighborhood map resizing -->
+    <param name="neighborhood_size" value="10.0"/>
   </node>
 </launch>

@@ -308,9 +308,21 @@ class node_skeleton:
 			img = np.transpose(img.astype(float))/100.0
 			img = 1.0 - img
 
+		# Take a local neighborhood of the image to cut down on compute time
+		x_ind = int(round((self.position.x - x_min)/self.voxel_size))
+		y_ind = int(round((self.position.y - y_min)/self.voxel_size))
+		robot_neighborhood = round(self.neighborhood_size/self.voxel_size) # convert to pixels
+		i_min = int(max(x_ind - robot_neighborhood, 0))
+		i_max = int(min(x_ind + robot_neighborhood, y_size))
+		j_min = int(max(y_ind - robot_neighborhood, 0))
+		j_max =  int(min(y_ind + robot_neighborhood, x_size))
+		img = img[i_min:i_max, j_min:j_max]
+		x_size, y_size = np.shape(img)
+		x_min = x_min + i_min*self.voxel_size
+		y_min = y_min + j_min*self.voxel_size
+
 		# Pad img with self.img_pad worth of occupied pixels
 		img = np.pad(img, self.img_pad, 'constant')
-
 
 		return img, x_min, y_min, x_size, y_size, yaw_origin
 
@@ -513,6 +525,7 @@ class node_skeleton:
 		self.seen_unseen_filter = bool(rospy.get_param("map2graph/seen_unseen_filter", False))
 		map_blur = float(rospy.get_param("map2graph/map_blur", 5.0))
 		map_thresh = float(rospy.get_param("map2graph/map_threshold", 0.4))
+		self.neighborhood_size = float(rospy.get_param("map2graph/neighborhood_size", 100.0)) # meters
 
 		# Subscribers
 		# rospy.Subscriber('X1/odometry', Odometry, self.getPosition)
@@ -580,7 +593,7 @@ class node_skeleton:
 				self.cloud2graph()
 			else:
 				if (self.cloud_get_first == False):
-					rospy.loginfo("map2graph - Waiting for map Pointcloud2 message")
+					rospy.loginfo("map2graph - Waiting for map message")
 				if (self.position_get_first == False):
 					rospy.loginfo("map2graph - Waiting for odometry message")
 

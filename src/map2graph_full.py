@@ -103,7 +103,7 @@ class node_skeleton:
 		frontier = np.greater(frontier,0.1)
 
 		# Subsample frontier image near node locations and if a frontier cluster is nearby, add node index to indices
-		node_neighborhood = 40
+		node_neighborhood = 30
 		img_limits = np.shape(img)
 		node_number = 0
 		for node in nodes:
@@ -113,10 +113,11 @@ class node_skeleton:
 			j_min = max(node[1] - node_neighborhood, 0)
 			j_max = min(node[1] + node_neighborhood, img_limits[1])
 			# print("neighborhood index range = [%d : %d, %d : %d]" % (i_min, i_max, j_min, j_max))
+			# plt.cla()
 			neighborhood = frontier[i_min:i_max, j_min:j_max]
 			# plt.imshow(neighborhood, interpolation='nearest')
 			# plt.plot(node[1] - j_min, node[0] - i_min, 'bo', markersize=15, markerfacecolor='none')
-			# plt.text(node[1]-5 - j_min, node[0]-5 - i_min, str(node_number), fontsize=12)
+			# plt.text(node[1]-5 - j_min, node[0]-5 - i_min, str(node_number), fontsize=12, color='xkcd:orange')
 			# plt.draw()
 			# plt.pause(2.0)
 			if np.sum(neighborhood) > 0:
@@ -131,10 +132,10 @@ class node_skeleton:
 			plt.plot(nodes[indices,1], nodes[indices,0], 'go', markersize=15, markerfacecolor='none')
 			node_label = 0
 			for n in nodes:
-				plt.text(n[1]-5, n[0]-5, str(node_label), fontsize=12)
+				plt.text(n[1]-5, n[0]-5, str(node_label), fontsize=12, color='xkcd:orange')
 				node_label = node_label + 1
 			plt.draw()
-			plt.pause(0.25)
+			plt.pause(5.0)
 
 		return indices
 
