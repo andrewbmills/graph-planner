@@ -77,7 +77,7 @@ class node_skeleton:
 	def findFrontierNodes(self, nodes, img):
 		indices = []
 		# Preprocess the image
-		free_thresh = 49.5
+		free_thresh = self.free_thresh
 		img_unseen = np.equal(img, -1) + np.greater(img,free_thresh)*np.less(img, 50.0)
 		img_free = np.less(img, free_thresh)*np.greater(img,-0.01)
 		img[:] = 0
@@ -94,7 +94,7 @@ class node_skeleton:
 		frontier = np.greater(frontier_conv, 0.1)*img_free
 
 		# Cluster frontiers
-		connected_thresh = 20
+		connected_thresh = self.frontier_cluster_thresh
 		frontier, num_labels = measure.label(frontier, connectivity=2, return_num=True)
 		for label in range(1,num_labels+1):
 			cluster = np.equal(frontier, label)
@@ -470,7 +470,10 @@ class node_skeleton:
 					self.graph_msg.node[parent_id].unexploredEdge.append(angle)
 
 			if msg_ids[closest_node] < 0:
-				self.graph_msg.currentNodeId = previousCurrentNodeId
+				if previousCurrentNodeId < self.graph_msg.size:
+					self.graph_msg.currentNodeId = previousCurrentNodeId
+				else:
+					self.graph_msg.currentNodeId = 0
 			else:
 				self.graph_msg.currentNodeId = msg_ids[closest_node]
 
@@ -509,7 +512,7 @@ class node_skeleton:
 
 	def __init__(self):
 		# Initialize ROS node and Subscribers
-		node_name = 'node_skeleton'
+		node_name = 'map2graph'
 		rospy.init_node(node_name)
 		self.rate = float(rospy.get_param("map2graph/rate", 5.0))
 
@@ -527,6 +530,8 @@ class node_skeleton:
 		self.home.y = home_y
 		map_blur = float(rospy.get_param("map2graph/map_blur", 5.0))
 		map_thresh = float(rospy.get_param("map2graph/map_threshold", 0.4))
+		self.frontier_cluster_thresh = int(rospy.get_param("map2graph/frontier_cluster_thresh", 20)) # Minimum cluster size to be considered frontier
+		self.free_thresh = float(rospy.get_param("map2graph/free_thresh", 49.5)) # Maximum occupancy probability to be considered free by frontier detection
 
 		# Subscribers
 		self.position = Point()

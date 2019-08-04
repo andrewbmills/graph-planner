@@ -84,7 +84,8 @@ class graph2path:
 				self.unexplored_edges.append([i, node.unexploredEdge])
 
 		self.current_node = data.currentNodeId
-		self.current_node_position = data.node[self.current_node].position
+		self.current_node_position.point = data.node[self.current_node].position
+		self.current_node_position.header.stamp = data.header.stamp
 
 		self.A = np.copy(Adj)
 		if not check_symmetric(self.A[:,:,0]):
@@ -114,9 +115,13 @@ class graph2path:
 		node_list = []
 		turn_list = []
 		if (n>1):
-			# print(Adj[:,:,0])
+			print(Adj[:,:,0])
 			g = GraphSolver()
-			parent, dist = g.dijkstra(Adj[:,:,0], self.current_node)
+			try:
+				parent, dist = g.dijkstra(Adj[:,:,0], self.current_node)
+			except:
+				rospy.logwarn("Graph msg not fully connected.")
+				return [], []
 		else:
 			print("Less than two nodes in the graph.")
 			return [], []
@@ -263,7 +268,7 @@ class graph2path:
 				else:
 					node_list, turn_list = self.findPath()
 				# Check if robot is at a node
-				dist = np.sqrt((self.position.x - self.current_node_position.x)**2 + (self.position.y - self.current_node_position.y)**2)
+				dist = np.sqrt((self.position.x - self.current_node_position.point.x)**2 + (self.position.y - self.current_node_position.point.y)**2)
 				if (dist <= self.at_a_node_radius):
 					self.at_a_node.data = True
 				else:
@@ -295,6 +300,7 @@ class graph2path:
 			self.pub5.publish(self.turn_list_poses)
 			self.pub1.publish(self.at_a_node)
 			self.pub3.publish(self.turn_command)
+			self.pub6.publish(self.current_node_position)
 		return
 
 	def __init__(self):
@@ -317,10 +323,12 @@ class graph2path:
 		self.pub3 = rospy.Publisher("cmd_turn_junction", Twist, queue_size=10)
 		self.pub4 = rospy.Publisher("next_turn_pose", PoseStamped, queue_size=10)
 		self.pub5 = rospy.Publisher("turn_list_poses", PoseArray, queue_size=10)
+		self.pub6 = rospy.Publisher("closest_node", PointStamped, queue_size=10)
 
 		# Initialize Subscription storage objects
 		self.position = Point()
-		self.current_node_position = Point()
+		self.current_node_position = PointStamped()
+		self.current_node_position.header.frame_id = self.fixed_frame
 		self.yaw = 0.0
 		self.task = "Explore"
 		self.graphmsg = Graph()
