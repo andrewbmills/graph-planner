@@ -413,6 +413,10 @@ class node_skeleton:
 			# plt.imshow(~skel, cmap=plt.cm.gray, interpolation='nearest')
 			# plt.imshow(~occGrid, cmap=plt.cm.gray, interpolation='nearest')
 
+			# Vehicle position in image coordinates
+			x_ind = int(round((self.position.x - x_min)/self.voxel_size)) + self.img_pad
+			y_ind = int(round((self.position.y - y_min)/self.voxel_size)) + self.img_pad
+
 			# Plotting time start
 			if (self.time_msgs):
 				start_time = time.time()
@@ -428,6 +432,7 @@ class node_skeleton:
 				plt.ion()
 				plt.show()
 				plt.plot(nodes_end[:,1], nodes_end[:,0], 'go', markersize=15, markerfacecolor='none')
+				plt.plot(y_ind, x_ind, 'g*', markersize=10)
 				plt.title('map2graph')
 				plt.imshow(occGrid + skel, cmap=plt.cm.gray, interpolation='nearest')
 				if len(nodes):
@@ -456,8 +461,7 @@ class node_skeleton:
 			if (num_nodes < 1):
 				# Don't need to find the closest node if there are none
 				return
-			x_ind = int(round((self.position.x - x_min)/self.voxel_size)) + self.img_pad
-			y_ind = int(round((self.position.y - y_min)/self.voxel_size)) + self.img_pad
+			
 			dist = np.linalg.norm(nodes_all - np.tile(np.array([x_ind, y_ind]), [num_nodes, 1]), axis=1)
 			if (self.time_msgs):
 				print("--- %0.2f ms: Distance to closest node ---" % ((time.time() - start_time)*1000.0))
