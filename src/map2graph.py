@@ -457,12 +457,13 @@ class node_skeleton:
 
 			# Calculate published topics
 			num_nodes, _ = np.shape(nodes_all)
+			num_junct = len(nodes)
 
-			if (num_nodes < 1):
+			if (num_junct < 1):
 				# Don't need to find the closest node if there are none
 				return
 			
-			dist = np.linalg.norm(nodes_all - np.tile(np.array([x_ind, y_ind]), [num_nodes, 1]), axis=1)
+			dist = np.linalg.norm(nodes - np.tile(np.array([x_ind, y_ind]), [num_junct, 1]), axis=1)
 			if (self.time_msgs):
 				print("--- %0.2f ms: Distance to closest node ---" % ((time.time() - start_time)*1000.0))
 

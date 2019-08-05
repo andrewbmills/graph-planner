@@ -323,7 +323,7 @@ class graph2path:
 		self.pub3 = rospy.Publisher("cmd_turn_junction", Twist, queue_size=10)
 		self.pub4 = rospy.Publisher("next_turn_pose", PoseStamped, queue_size=10)
 		self.pub5 = rospy.Publisher("turn_list_poses", PoseArray, queue_size=10)
-		self.pub6 = rospy.Publisher("closest_node", PointStamped, queue_size=10)
+		self.pub6 = rospy.Publisher("junction_center", PointStamped, queue_size=10)
 
 		# Initialize Subscription storage objects
 		self.position = Point()

@@ -1,8 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <launch>
 <!-- Graph plotting in rviz node -->
   <node name="graphmsg2rviz" pkg="graph-planner" type="graphmsg2rviz.py"  output="screen">
     <!-- Graph msg -->
-    <remap from="graph" to="node_skeleton/graph"/>
+    <remap from="graph" to="demo/node_skeleton/graph"/>
     <!-- Rviz topics -->
     <remap from="ExploredEdges" to="node_skeleton/rviz_plugin/ExploredEdges"/>
     <remap from="UnexploredEdges" to="node_skeleton/rviz_plugin/UnexploredEdges"/>

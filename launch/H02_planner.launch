@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<launch>
+  <!-- Map to Graph Node -->
+  <node pkg="graph-planner" type="map2graph.py" name="map2graph" output="screen">
+    <!-- Inputs (Subscribed Topic Names) -->
+    <remap from="odometry" to="husky_odom"/>
+    <!-- <remap from="odometry" to="/jackal_odom"/> -->
+    <!-- <remap from="odometry" to="/H02/odometry"/> -->
+
+    <!-- Map data in a PointCloud2 msg.  Either an ESDF or Occupancy grid message -->
+    <!-- <remap from="pointcloud" to="/octomap_point_cloud_free"/> -->
+    <!-- <remap from="pointcloud" to="/voxblox_node/esdf_pointcloud"/> -->
+    <remap from="occupancy" to="map"/>
+
+    <!-- Outputs (Published Topic Names) -->
+    <remap from="node_skeleton/closest_node" to="demo/node_skeleton/closest_node"/>
+    <remap from="node_skeleton/closest_edges" to="demo/node_skeleton/closest_edges"/>
+    <remap from="node_skeleton/closest_node_poses" to="demo/node_skeleton/closest_node_poses"/>
+
+    <!-- Parameters -->
+    <!-- Size of the map voxels -->
+    <param name="voxel_size" value="0.2"/>
+
+    <!-- Map type is either Voxblox (ESDF) or Octomap (Occupancy Grid) -->
+    <param name="mapType" value="OccupancyGrid"/>
+    <!-- <param name="mapType" value="Voxblox"/> -->
+    <!-- <param name="mapType" value="Octomap"/> -->
+
+    <!-- Seen vs Unseen filter toggle -->
+    <param name="seen_unseen_filter" value="1"/>
+
+    <!-- Local neighborhood map radius in meters-->
+    <param name="neighborhood_size" value="10.0"/>
+
+    <!-- Update rate in (Hz) -->
+    <param name="rate" value="1.0"/>
+
+    <!-- Number of voxel_size vertical slices to integrate into the 2D map representation for skeletonization -->
+    <param name="num_slices" value="1"/>
+
+    <!-- "plotting" is whether or not to output the full result maplotlib plot.  "plot_steps" is for debugging -->
+    <param name="plotting" value="1"/>
+    <param name="plot_steps" value="0"/>
+
+    <!-- Gaussian kernel parameters for blurring the 2D occupancy grid -->
+    <param name="map_blur" value="3.0"/>
+    <param name="map_threshold" value="0.5"/>
+  </node>
+
+  <!-- Graph construction node -->
+  <node name="gbm_node" pkg="gbm_pkg" type="gbm_node"  output="screen">
+    <!-- Odom -->
+    <!-- <remap from="odometry" to="/H02/odometry"/> -->
+    <remap from="odometry" to="husky_odom"/>
+
+    <!-- Node skeleton output topics -->
+    <remap from="closest_node" to="demo/node_skeleton/closest_node"/>
+    <remap from="edge_list" to="demo/node_skeleton/closest_edges"/>
+    <!-- <remap from="dead_end_flag" to="node_skeleton/dead_end_detected"/> -->
+
+    <!-- Custom graph msg -->
+    <remap from="graph" to="demo/node_skeleton/graph"/>
+
+    <!-- Parameters -->
+    <!-- You'll have to talk to Shakeeb -->
+    <param name="sRadius" value="3.0"/>
+    <param name="rRadius" value="3.0"/>
+    <param name="eRadius" value="0.7"/>
+    <param name="dRadius" value="0.25"/>
+    <param name="logFilePath" value="$(find graph-planner)/launch/gbm_pkg_log.txt"/>
+  </node>
+
+  <include file="$(find graph-planner)/launch/H02_graph2path.launch"/>
+  <include file="$(find graph-planner)/launch/graph2rviz.launch"/>
+
+</launch>
