@@ -30,7 +30,7 @@
     <param name="seen_unseen_filter" value="1"/>
 
     <!-- Local neighborhood map radius in meters-->
-    <param name="neighborhood_size" value="10.0"/>
+    <param name="neighborhood_size" value="30.0"/>
 
     <!-- Update rate in (Hz) -->
     <param name="rate" value="1.0"/>
