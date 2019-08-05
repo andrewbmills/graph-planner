@@ -28,7 +28,7 @@
 
     <!-- "plotting" is whether or not to output the full result maplotlib plot.  "plot_steps" is for debugging -->
     <param name="plotting" value="1"/>
-    <param name="plot_steps" value="0"/>
+    <param name="plot_steps" value="1"/>
 
     <!-- Gaussian kernel parameters for blurring the 2D occupancy grid -->
     <param name="map_blur" value="3.0"/>
