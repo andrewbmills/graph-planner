@@ -28,7 +28,7 @@
 
     <!-- "plotting" is whether or not to output the full result maplotlib plot.  "plot_steps" is for debugging -->
     <param name="plotting" value="1"/>
-    <param name="plot_steps" value="1"/>
+    <param name="plot_steps" value="0"/>
 
     <!-- Gaussian kernel parameters for blurring the 2D occupancy grid -->
     <param name="map_blur" value="3.0"/>
@@ -39,9 +39,19 @@
 
     <!-- Unexplored Node detection parameters -->
     <!-- Minimum number of connected frontier pixels for clustering -->
-    <param name="frontier_cluster_thresh" value="15"/>
+    <param name="frontier_cluster_thresh" value="80"/>
+
     <!-- All occupancy probabilities below this value are considered free for frontier finding -->
     <param name="free_thresh" value="49.5"/>
+
+    <!-- Graph fence -->
+    <!-- Only considers x positions greater than this threshold -->
+    <param name="x_entrance_filter" value="5.0"/>
+
+    <!-- Short unseen edge filter -->
+    <!-- Unseen edges shorter than this length will be considered explored -->
+    <param name="unseen_edge_filter" value="9.0"/>
+
   </node>
 
   <!-- Graph plotting in rviz node -->

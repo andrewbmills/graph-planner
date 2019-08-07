@@ -78,7 +78,7 @@ class node_skeleton:
 		indices = []
 		# Preprocess the image
 		free_thresh = self.free_thresh
-		img_unseen = np.equal(img, -1) + np.greater(img,free_thresh)*np.less(img, 50.0)
+		img_unseen = np.less(img, -0.5) + np.greater(img,free_thresh-10.0)*np.less(img, 60.0)
 		img_free = np.less(img, free_thresh)*np.greater(img,-0.01)
 		img[:] = 0
 		img[img_unseen] = 1
@@ -135,7 +135,7 @@ class node_skeleton:
 				plt.text(n[1]-5, n[0]-5, str(node_label), fontsize=12, color='xkcd:orange')
 				node_label = node_label + 1
 			plt.draw()
-			plt.pause(5.0)
+			plt.pause(2.0)
 
 		return indices
 
@@ -280,21 +280,29 @@ class node_skeleton:
 
 		# Read the map data
 		img = np.array(self.occupancy_grid_msg.data).reshape((self.occupancy_grid_msg.info.height, self.occupancy_grid_msg.info.width))
+		img = np.transpose(img)
+
+		# Get rid of all data behind the entrance to the tunnel
+		entrance_x_index = int(round((self.x_entrance - x_min)/self.voxel_size))
+		if entrance_x_index > 0:
+			img = np.copy(img[entrance_x_index:, :])
+			x_min = self.x_entrance
+			x_size, _ = np.shape(img)
+
 		# Pad img with self.img_pad worth of unseen pixels
 		img = np.pad(img, self.img_pad, 'constant', constant_values=((-1,-1),(-1,-1)))
 		# Save raw img for frontier finding
-		img_raw = np.transpose(np.copy(img))
+		img_raw = np.copy(img)
 		# Preprocess the data
 		if self.seen_unseen_filter:
-			img = np.transpose(img.astype(float))
+			img = img.astype(float)
 			img_unknown = np.less(img, 60)*np.greater(img,40) + np.equal(img, -1)
 			img[np.greater(img,-0.01)] = 1.0
 			img[img_unknown] = 0.0
 		else:
 			img[np.equal(img,-1)] = 100
-			img = np.transpose(img.astype(float))/100.0
+			img = img.astype(float)/100.0
 			img = 1.0 - img
-
 
 		return img, x_min, y_min, x_size, y_size, yaw_origin, img_raw
 
@@ -437,10 +445,13 @@ class node_skeleton:
 					msg_ids.append(newNode.id)
 					newNode.position.x = (node[0] - self.img_pad)*self.voxel_size + x_min
 					newNode.position.y = (node[1] - self.img_pad)*self.voxel_size + y_min
-					self.graph_msg.node.append(newNode)
+					if newNode.id == 0:
+						self.graph_msg.node.insert(0, newNode)
+					else:
+						self.graph_msg.node.append(newNode)
 					node_num = node_num + 1
 
-			self.graph_msg.size = node_ids
+			self.graph_msg.size = len(self.graph_msg.node)
 			# Add in graph edges to message
 			for edge in edges:
 				parent_id = msg_ids[edge["parent"]]
@@ -467,8 +478,13 @@ class node_skeleton:
 						self.graph_msg.node[child_id].edgeCost.append(path_length)
 						self.graph_msg.node[child_id].exploredEdge.append(angle)
 				else:
-					self.graph_msg.node[parent_id].nUnexploredEdge = self.graph_msg.node[parent_id].nUnexploredEdge + 1
-					self.graph_msg.node[parent_id].unexploredEdge.append(angle)
+					if (path_length*self.voxel_size < self.unseen_edge_filter):
+						# Edge should be filtered since it's so stubby and lame
+						# Mike O. said this would be a good idea too so if it screws anything up blame him.
+						continue
+					else:
+						self.graph_msg.node[parent_id].nUnexploredEdge = self.graph_msg.node[parent_id].nUnexploredEdge + 1
+						self.graph_msg.node[parent_id].unexploredEdge.append(angle)
 
 			if msg_ids[closest_node] < 0:
 				if previousCurrentNodeId < self.graph_msg.size:
@@ -477,6 +493,19 @@ class node_skeleton:
 					self.graph_msg.currentNodeId = 0
 			else:
 				self.graph_msg.currentNodeId = msg_ids[closest_node]
+
+			# Check to make sure that all nodes have at least on neighbor and remove those that don't
+			orphans = []
+			for i in range(1,node_ids):
+				# print("Neighbor list for node %d:" % (i))
+				# print(self.graph_msg.node[i].neighborId)
+				if len(self.graph_msg.node[i].neighborId) < 1:
+					orphans.append(i)
+
+			popCount = 0
+			for orphan_id in orphans:
+				self.graph_msg.node.pop(orphan_id-popCount)
+				popCount = popCount + 1
 
 			# Plotting time start
 			if (self.time_msgs):
@@ -533,6 +562,8 @@ class node_skeleton:
 		map_thresh = float(rospy.get_param("map2graph/map_threshold", 0.4))
 		self.frontier_cluster_thresh = int(rospy.get_param("map2graph/frontier_cluster_thresh", 20)) # Minimum cluster size to be considered frontier
 		self.free_thresh = float(rospy.get_param("map2graph/free_thresh", 49.5)) # Maximum occupancy probability to be considered free by frontier detection
+		self.x_entrance = float(rospy.get_param("map2graph/x_entrance_filter", 0.0)) # meters
+		self.unseen_edge_filter = float(rospy.get_param("map2graph/unseen_edge_filter", 9.0)) # 30ft lol
 
 		# Subscribers
 		self.position = Point()
