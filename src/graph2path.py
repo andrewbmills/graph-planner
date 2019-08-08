@@ -77,9 +77,13 @@ class graph2path:
 				j = node.neighborId[edge_num]
 				cost = node.edgeCost[edge_num]
 				angle = node.exploredEdge[edge_num]
-				if (Adj[i,j,0] < 0.01) or (cost < Adj[i,j,0]):
-					Adj[i,j,0] = cost
-					Adj[i,j,1] = angle
+				try:
+					if (Adj[i,j,0] < 0.01) or (cost < Adj[i,j,0]):
+						Adj[i,j,0] = cost
+						Adj[i,j,1] = angle
+				except:
+					print(data)
+					rospy.logwarn("Graph message ids out of bounds.")
 			if node.nUnexploredEdge:
 				self.unexplored_edges.append([i, node.unexploredEdge])
 
@@ -209,11 +213,12 @@ class graph2path:
 	def setTurnCommand(self, goal_angle):
 		delta_angle = angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*self.yaw)
 		print("delta_angle = %0.2f degrees" % (delta_angle))
-		if np.abs(delta_angle) > 30.0:
+		if np.abs(delta_angle) > 10.0:
 			self.turn_command.linear.x = 0.0
 		else:
 			self.turn_command.linear.x = self.speed
-		self.turn_command.angular.z = self.turn_gain*((np.pi/180.0)*delta_angle)
+		self.turn_command.angular.z = np.sign(delta_angle)*max(abs(self.turn_gain*((np.pi/180.0)*delta_angle)), 0.2)
+		print("Turn command = %0.2f rad/s" % self.turn_command.angular.z)
 		return
 
 	def pathHome(self):
