@@ -16,7 +16,7 @@ import sensor_msgs.point_cloud2 as pc2
 # My own wrapped thinning function
 import sys
 # sys.path.insert(0, '../include/')
-import thin_ext as cppthin
+# import thin_ext as cppthin
 from skimage.morphology import skeletonize, thin
 # image convolution library
 from scipy import ndimage
@@ -383,21 +383,21 @@ class node_skeleton:
 
 			# Call thinning c++ function library
 			# Convert the occGrid image into a flattened image of type float
-			occGrid_img = occGrid.astype(float)
-			occGrid_img_list = list(occGrid_img.flatten())
-			rows, cols = np.shape(occGrid)
-			if (self.time_msgs):
-				start_cpp_time = time.time()
-			skel = cppthin.voronoi_thin(occGrid_img_list, rows, cols, self.thinning_type)
-			if (self.time_msgs):
-				print("--- %0.2f ms: Skeletonization (Cpp only) ---" % ((time.time() - start_cpp_time)*1000.0))
-			skel = np.array(skel)
-			skel = skel.reshape((rows, cols))
-			skel = np.less(skel, 0.5)
+			# occGrid_img = occGrid.astype(float)
+			# occGrid_img_list = list(occGrid_img.flatten())
+			# rows, cols = np.shape(occGrid)
+			# if (self.time_msgs):
+			#	start_cpp_time = time.time()
+			# skel = cppthin.voronoi_thin(occGrid_img_list, rows, cols, self.thinning_type)
+			# if (self.time_msgs):
+			#	print("--- %0.2f ms: Skeletonization (Cpp only) ---" % ((time.time() - start_cpp_time)*1000.0))
+			# skel = np.array(skel)
+			# skel = skel.reshape((rows, cols))
+			# skel = np.less(skel, 0.5)
 
 			# Python's skimage library
 			# skel = thin(~occGrid)
-			# skel = skeletonize(~occGrid)
+			skel = skeletonize(~occGrid)
 			skel = skel.astype(np.uint16)
 			if (self.time_msgs):
 				print("--- %0.2f ms: Skeletonization ---" % ((time.time() - start_time)*1000.0))

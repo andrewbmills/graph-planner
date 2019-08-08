@@ -3,11 +3,11 @@
    <node pkg="graph-planner" type="graph2path.py" name="graph2path" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
     <!-- Graph msg -->
-    <remap from="graph" to="demo/node_skeleton/graph"/>
+    <remap from="graph" to="node_skeleton/graph"/>
 
     <!-- Odometry msg -->
     <!-- <remap from="odometry" to="/jackal_odom"/> -->
-    <remap from="odometry" to="husky_odom"/>
+    <remap from="odometry" to="odometry"/>
 
     <!-- Set to "Explore" by default.  "Explore" goes to the nearest unexplored edge in the graph.  "Home" goes back to node 0. -->
     <!-- <remap from="task" to="/X1/task"/> -->
@@ -23,12 +23,12 @@
     <!-- Yaw angle (in radians) in inertial frame to turn to at the next node/junction -->
     <!-- <remap from="next_turn" to="/X1/next_turn"/> -->
 
-    <!-- Closest node PoseStamped topic -->
+    <!-- Closest node PointStamped topic -->
     <!-- <remap from="junction_center" to="H02/closest_node"/> -->
 
     <!-- Rviz plotting remaps -->
-    <remap from="next_turn_pose" to="demo/node_skeleton/next_turn_pose"/>
-    <remap from="turn_list_poses" to="demo/node_skeleton/turn_list_poses"/>
+    <remap from="next_turn_pose" to="node_skeleton/next_turn_pose"/>
+    <remap from="turn_list_poses" to="node_skeleton/turn_list_poses"/>
 
     <!-- Parameters -->
     <!-- Update rate (Hz) -->
