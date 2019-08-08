@@ -3,13 +3,13 @@
   <!-- Map to Graph Node -->
   <node pkg="graph-planner" type="map2graph_full.py" name="map2graph" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
-    <remap from="odometry" to="/husky_odom"/>
+    <remap from="odometry" to="husky_odom"/>
     <!-- <remap from="odometry" to="/X1/odometry"/> -->
 
     <!-- Map data in a PointCloud2 msg.  Either an ESDF or Occupancy grid message -->
     <!-- <remap from="pointcloud" to="/octomap_point_cloud_centers_free"/> -->
     <!-- <remap from="pointcloud" to="/voxblox_node/esdf_pointcloud"/> -->
-    <remap from="occupancy" to="/map"/>
+    <remap from="occupancy" to="map"/>
 
     <!-- Outputs (Published Topic Names) -->
     <!-- <remap from="node_skeleton/closest_node" to="demo/node_skeleton/closest_node"/> -->
@@ -31,11 +31,11 @@
     <param name="plot_steps" value="0"/>
 
     <!-- Gaussian kernel parameters for blurring the 2D occupancy grid -->
-    <param name="map_blur" value="3.0"/>
+    <param name="map_blur" value="2.0"/>
     <param name="map_threshold" value="0.5"/>
 
     <!-- Seen vs Unseen filter instead of occGrid -->
-    <param name="seen_unseen_filter" value="1"/>
+    <param name="seen_unseen_filter" value="0"/>
 
     <!-- Unexplored Node detection parameters -->
     <!-- Minimum number of connected frontier pixels for clustering -->
@@ -46,11 +46,11 @@
 
     <!-- Graph fence -->
     <!-- Only considers x positions greater than this threshold -->
-    <param name="x_entrance_filter" value="5.0"/>
+    <param name="x_entrance_filter" value="-1.0"/>
 
     <!-- Short unseen edge filter -->
     <!-- Unseen edges shorter than this length will be considered explored -->
-    <param name="unseen_edge_filter" value="9.0"/>
+    <param name="unseen_edge_filter" value="7.0"/>
 
   </node>
 
@@ -75,7 +75,8 @@
     <!-- <remap from="graph" to="demo/node_skeleton/graph"/> -->
     <!-- Odometry msg -->
     <!-- <remap from="odometry" to="/jackal_odom"/> -->
-    <remap from="odometry" to="/husky_odom"/>
+    <remap from="odometry" to="husky_odom"/>
+    <!-- <remap from="odometry" to="/X1/odometry"/> -->
 
     <!-- Set to "Explore" by default.  "Explore" goes to the nearest unexplored edge in the graph.  "Home" goes back to node 0. -->
     <!-- <remap from="task" to="/X1/task"/> -->
@@ -103,6 +104,8 @@
     <!-- <param name="speed" value="1.0"/> -->
     
     <!-- Radius for detecting whether or not the robot is at a node -->
-    <!-- <param name="node_radius" value="3.0"/> -->
+    <param name="node_radius" value="3.0"/>
    </node>
+
+   <!-- <include file="$(find graph-planner)/launch/centering.launch"/> -->
 </launch>

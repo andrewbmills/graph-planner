@@ -507,6 +507,8 @@ class node_skeleton:
 				self.graph_msg.node.pop(orphan_id-popCount)
 				popCount = popCount + 1
 
+			self.graph_msg.size = len(self.graph_msg.node)
+
 			# Plotting time start
 			if (self.time_msgs):
 				start_time = time.time()
@@ -519,7 +521,8 @@ class node_skeleton:
 				plt.ion()
 				plt.show()
 				plt.plot(nodes_end[:,1], nodes_end[:,0], 'bo', markersize=15, markerfacecolor='none')
-				plt.plot(nodes_end[frontier_node_indices,1], nodes_end[frontier_node_indices,0], 'go', markersize=15, markerfacecolor='none')
+				if len(frontier_node_indices) > 0:
+					plt.plot(nodes_end[frontier_node_indices,1], nodes_end[frontier_node_indices,0], 'go', markersize=15, markerfacecolor='none')
 				plt.plot(y_ind, x_ind, 'g*')
 				plt.title('map2graph')
 				plt.imshow(occGrid + skel, cmap=plt.cm.gray, interpolation='nearest')
