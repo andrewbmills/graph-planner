@@ -39,9 +39,9 @@
 
     <!-- Speed for node Twist command in m/s -->
     <!-- <param name="speed" value="1.0"/> -->
-    
+
     <!-- Radius for detecting whether or not the robot is at a node -->
-    <param name="node_radius" value="2.0"/>
+    <param name="node_radius" value="3.0"/>
    </node>
 
 </launch>

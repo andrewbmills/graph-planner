@@ -266,7 +266,11 @@ class graph2path:
 			turn_list = []
 			if (self.first_graph_msg):
 				# Convert graph msg from callback into readable data
-				self.readGraph(copy.deepcopy(self.graphmsg))
+				try:
+					self.readGraph(copy.deepcopy(self.graphmsg))
+				except:
+					rospy.logwarn("Graph message could not be read")
+					continue
 				if (self.task == "Home_slow"):
 					node_list, turn_list = self.pathHome()
 					print("Robot is heading home now.")

@@ -3,7 +3,7 @@
   <!-- Map to Graph Node -->
   <node pkg="graph-planner" type="map2graph_full.py" name="map2graph" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
-    <remap from="odometry" to="husky_odom"/>
+    <remap from="odometry" to="/H02/odometry"/> 
     <!-- <remap from="odometry" to="/X1/odometry"/> -->
 
     <!-- Map data in a PointCloud2 msg.  Either an ESDF or Occupancy grid message -->
@@ -31,7 +31,7 @@
     <param name="plot_steps" value="0"/>
 
     <!-- Gaussian kernel parameters for blurring the 2D occupancy grid -->
-    <param name="map_blur" value="2.0"/>
+    <param name="map_blur" value="3.0"/>
     <param name="map_threshold" value="0.5"/>
 
     <!-- Seen vs Unseen filter instead of occGrid -->
@@ -46,7 +46,8 @@
 
     <!-- Graph fence -->
     <!-- Only considers x positions greater than this threshold -->
-    <param name="x_entrance_filter" value="-1.0"/>
+    
+    <param name="x_entrance_filter" value="-1.0`"/>
 
     <!-- Short unseen edge filter -->
     <!-- Unseen edges shorter than this length will be considered explored -->
@@ -75,7 +76,7 @@
     <!-- <remap from="graph" to="demo/node_skeleton/graph"/> -->
     <!-- Odometry msg -->
     <!-- <remap from="odometry" to="/jackal_odom"/> -->
-    <remap from="odometry" to="husky_odom"/>
+    <!-- <remap from="odometry" to="husky_odom"/> -->
     <!-- <remap from="odometry" to="/X1/odometry"/> -->
 
     <!-- Set to "Explore" by default.  "Explore" goes to the nearest unexplored edge in the graph.  "Home" goes back to node 0. -->
@@ -102,7 +103,7 @@
 
     <!-- Speed for node Twist command in m/s -->
     <!-- <param name="speed" value="1.0"/> -->
-    
+
     <!-- Radius for detecting whether or not the robot is at a node -->
     <param name="node_radius" value="3.0"/>
    </node>

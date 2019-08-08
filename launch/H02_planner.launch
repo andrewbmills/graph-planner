@@ -27,7 +27,7 @@
     <!-- <param name="mapType" value="Octomap"/> -->
 
     <!-- Seen vs Unseen filter toggle -->
-    <param name="seen_unseen_filter" value="1"/>
+    <param name="seen_unseen_filter" value="0"/>
 
     <!-- Local neighborhood map radius in meters-->
     <param name="neighborhood_size" value="30.0"/>
