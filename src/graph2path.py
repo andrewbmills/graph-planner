@@ -172,8 +172,13 @@ class graph2path:
 			else:
 				# Add the turn at the goal node as the minimum turning angle from the arriving yaw
 				delta_min = 361.0
+				if self.turn_biasing:
+					bias_angle = np.arctan2(self.node_position_list[node_list[-1]].y - self.position.y, self.node_position_list[node_list[-1]].x - self.position.x)
 				for goal_angle in self.unexplored_edges[destination_edge_idx][1]:
-					delta = np.abs(angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*arriving_angle))
+					if self.turn_biasing:
+						delta = np.abs(angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*bias_angle))
+					else:
+						delta = np.abs(angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*arriving_angle))
 					if (delta < delta_min):
 						delta_min = delta
 						goal_angle_min = goal_angle
@@ -187,8 +192,13 @@ class graph2path:
 				else:
 					# Add the turn at the goal node as the minimum turning angle from the current yaw
 					delta_min = 361.0
+					if self.turn_biasing:
+						bias_angle = np.arctan2(self.turn_goal_y - self.position.y, self.turn_goal_x - self.position.x)
 					for goal_angle in self.unexplored_edges[destination_edge_idx][1]:
-						delta = np.abs(angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*self.yaw))
+						if self.turn_biasing:
+							delta = np.abs(angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*bias_angle))
+						else:
+							delta = np.abs(angleDiff((180.0/np.pi)*goal_angle, (180.0/np.pi)*self.yaw)) 
 						if (delta < delta_min):
 							delta_min = delta
 							goal_angle_min = goal_angle
@@ -319,6 +329,9 @@ class graph2path:
 		self.fixed_frame = str(rospy.get_param("graph2path/fixed_frame", "world"))
 		self.speed = float(rospy.get_param("graph2path/speed", 1.0))
 		self.at_a_node_radius = float(rospy.get_param("graph2path/node_radius", 3.0))
+		self.turn_biasing = bool(rospy.get_param("graph2path/turn_biasing", False))
+		self.turn_goal_x = float(rospy.get_param("graph2path/turn_goal_x", 5000.0))
+		self.turn_goal_y = float(rospy.get_param("graph2path/turn_goal_y", 0.0))
 
 		# Subscribers
 		rospy.Subscriber("graph", Graph, self.getGraph)

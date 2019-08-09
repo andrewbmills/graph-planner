@@ -24,7 +24,7 @@
     <param name="yaw_rate_max" value="0.4"/>
 
     <!-- Depth vs Azimuth plot window -->
-    <param name="plot" value="1"/>
+    <param name="plot" value="0"/>
 
     <param name="min_peak_height" value="5.0"/>
   </node>

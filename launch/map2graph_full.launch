@@ -46,7 +46,6 @@
 
     <!-- Graph fence -->
     <!-- Only considers x positions greater than this threshold -->
-
     <param name="x_entrance_filter" value="-1.0"/>
 
     <!-- Short unseen edge filter -->
@@ -66,7 +65,7 @@
 
     <!-- Parameters -->
     <param name="rate" value="5.0"/>
-    <param name="fixed_frame" value="world"/>
+    <param name="fixed_frame" value="map"/>
   </node>
 
   <!-- Path planning node -->
@@ -106,7 +105,13 @@
 
     <!-- Radius for detecting whether or not the robot is at a node -->
     <param name="node_radius" value="3.0"/>
+
+    <!-- Turn biasing -->
+    <param name="turn_biasing" value="false"/>
+    <param name="turn_goal_x" value="0.0"/>
+    <param name="turn_goal_y" value="0.0"/>
    </node>
 
    <!-- <include file="$(find graph-planner)/launch/centering.launch"/> -->
+   <!-- <include file="$(find graph-planner)/launch/junction_switch.launch"/> -->
 </launch>

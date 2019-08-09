@@ -42,6 +42,11 @@
 
     <!-- Radius for detecting whether or not the robot is at a node -->
     <param name="node_radius" value="3.0"/>
+
+    <!-- Turn biasing -->
+    <param name="turn_biasing" value="false"/>
+    <param name="turn_goal_x" value="50.0"/>
+    <param name="turn_goal_y" value="-1000.0"/>
    </node>
 
 </launch>

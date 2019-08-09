@@ -575,7 +575,7 @@ class node_skeleton:
 		rospy.Subscriber('odometry', Odometry, self.getPosition)
 
 		self.map_get_first = False
-		rospy.Subscriber('map', OccupancyGrid, self.getOccupancyGrid)
+		rospy.Subscriber('occupancy', OccupancyGrid, self.getOccupancyGrid)
 		self.occupancy_grid_msg = OccupancyGrid()
 
 		# Initialize Publisher topics
