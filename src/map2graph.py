@@ -260,7 +260,7 @@ class node_skeleton:
 			img = -1
 			rospy.logwarn("PointCloud2 msg is empty.")
 			return img, x_min, y_min, x_size, y_size
-		if (self.time_msgs):				
+		if (self.time_msgs):
 			print("--- %0.2f ms: Finding x and y extrema ---" % ((time.time() - start_time)*1000.0))
 
 		# Restrict points to just the z_slice neighborhood
@@ -346,7 +346,7 @@ class node_skeleton:
 			# Gaussian blur timing start
 			if (self.time_msgs):
 				start_time = time.time()
-			
+
 			if (self.mapType == "Voxblox"):
 				# Gaussian blur the image
 				img_blur = cv2.GaussianBlur(img, (self.blur_size, self.blur_size), self.blur_sigma)
@@ -396,8 +396,8 @@ class node_skeleton:
 			# skel = np.less(skel, 0.5)
 
 			# Python's skimage library
-			# skel = thin(~occGrid)
-			skel = skeletonize(~occGrid)
+			skel = thin(~occGrid)
+			# skel = skeletonize(~occGrid)
 			skel = skel.astype(np.uint16)
 			if (self.time_msgs):
 				print("--- %0.2f ms: Skeletonization ---" % ((time.time() - start_time)*1000.0))
@@ -462,7 +462,7 @@ class node_skeleton:
 			if (num_junct < 1):
 				# Don't need to find the closest node if there are none
 				return
-			
+
 			dist = np.linalg.norm(nodes - np.tile(np.array([x_ind, y_ind]), [num_junct, 1]), axis=1)
 			if (self.time_msgs):
 				print("--- %0.2f ms: Distance to closest node ---" % ((time.time() - start_time)*1000.0))
@@ -480,7 +480,7 @@ class node_skeleton:
 			# Edge angle calculations
 			edge_angles = []
 			self.edge_poses = PoseArray()
-			self.edge_poses.header.frame_id = "world"
+			self.edge_poses.header.frame_id = self.fixed_frame
 			self.edge_poses.header.stamp = rospy.Time.now()
 			# print(closest_node_id)
 			for i in range(len(edges)):
@@ -528,6 +528,7 @@ class node_skeleton:
 		self.plot_steps = bool(rospy.get_param("map2graph/plot_steps", False))
 		self.time_msgs = bool(rospy.get_param("map2graph/time_msgs", False))
 		self.seen_unseen_filter = bool(rospy.get_param("map2graph/seen_unseen_filter", False))
+		self.fixed_frame = string(rospy.get_param("map2graph/fixed_frame", "world"))
 		map_blur = float(rospy.get_param("map2graph/map_blur", 5.0))
 		map_thresh = float(rospy.get_param("map2graph/map_threshold", 0.4))
 		self.neighborhood_size = float(rospy.get_param("map2graph/neighborhood_size", 100.0)) # meters
@@ -547,7 +548,7 @@ class node_skeleton:
 		pubTopic = 'node_skeleton/closest_node'
 		self.pub_closest_node = rospy.Publisher(pubTopic, PointStamped, queue_size=1)
 		self.closest_node = PointStamped()
-		self.closest_node.header.frame_id = "world"
+		self.closest_node.header.frame_id = self.fixed_frame
 
 		pubTopic = 'node_skeleton/closest_edges'
 		self.pub_closest_edges = rospy.Publisher(pubTopic, Float32MultiArray, queue_size=1)

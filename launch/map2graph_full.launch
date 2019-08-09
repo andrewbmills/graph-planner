@@ -3,7 +3,7 @@
   <!-- Map to Graph Node -->
   <node pkg="graph-planner" type="map2graph_full.py" name="map2graph" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
-    <remap from="odometry" to="/H02/odometry"/> 
+    <remap from="odometry" to="odometry"/>
     <!-- <remap from="odometry" to="/X1/odometry"/> -->
 
     <!-- Map data in a PointCloud2 msg.  Either an ESDF or Occupancy grid message -->
@@ -46,12 +46,12 @@
 
     <!-- Graph fence -->
     <!-- Only considers x positions greater than this threshold -->
-    
-    <param name="x_entrance_filter" value="-1.0`"/>
+
+    <param name="x_entrance_filter" value="-1.0"/>
 
     <!-- Short unseen edge filter -->
     <!-- Unseen edges shorter than this length will be considered explored -->
-    <param name="unseen_edge_filter" value="7.0"/>
+    <param name="unseen_edge_filter" value="9.0"/>
 
   </node>
 

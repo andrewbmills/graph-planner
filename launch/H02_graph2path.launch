@@ -35,7 +35,7 @@
     <param name="rate" value="3.0"/>
 
     <!-- Fixed frame string -->
-    <!-- <param name="fixed_frame" value="world"/> -->
+    <param name="fixed_frame" value="map"/>
 
     <!-- Speed for node Twist command in m/s -->
     <!-- <param name="speed" value="1.0"/> -->

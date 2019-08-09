@@ -72,7 +72,7 @@ class node_skeleton:
 					nearby_ind = np.squeeze(np.array(np.nonzero(np.less(d,5.0))))
 					added_indices.extend(list(nearby_ind))
 					nodes_filtered.append(list(np.average(nodes[nearby_ind,:],axis=0)))
-		return np.array(nodes_filtered)	
+		return np.array(nodes_filtered)
 
 	def findFrontierNodes(self, nodes, img):
 		indices = []
@@ -325,7 +325,7 @@ class node_skeleton:
 			# Gaussian blur timing start
 			if (self.time_msgs):
 				start_time = time.time()
-			
+
 			# img = 1.0 - img
 			# Occupancy Grid, gaussian blur the image
 			img_blur = cv2.GaussianBlur(img, (self.blur_size, self.blur_size), self.blur_sigma, borderType=1)
@@ -566,15 +566,16 @@ class node_skeleton:
 		self.frontier_cluster_thresh = int(rospy.get_param("map2graph/frontier_cluster_thresh", 20)) # Minimum cluster size to be considered frontier
 		self.free_thresh = float(rospy.get_param("map2graph/free_thresh", 49.5)) # Maximum occupancy probability to be considered free by frontier detection
 		self.x_entrance = float(rospy.get_param("map2graph/x_entrance_filter", 0.0)) # meters
+		# self.x_entrance = -5000.0
 		self.unseen_edge_filter = float(rospy.get_param("map2graph/unseen_edge_filter", 9.0)) # 30ft lol
 
 		# Subscribers
 		self.position = Point()
 		self.position_get_first = False
-		rospy.Subscriber('/H02/husky_odom', Odometry, self.getPosition)
-		
+		rospy.Subscriber('odometry', Odometry, self.getPosition)
+
 		self.map_get_first = False
-		rospy.Subscriber('/H02/map', OccupancyGrid, self.getOccupancyGrid)
+		rospy.Subscriber('map', OccupancyGrid, self.getOccupancyGrid)
 		self.occupancy_grid_msg = OccupancyGrid()
 
 		# Initialize Publisher topics

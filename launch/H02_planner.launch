@@ -45,6 +45,9 @@
     <!-- Gaussian kernel parameters for blurring the 2D occupancy grid -->
     <param name="map_blur" value="3.0"/>
     <param name="map_threshold" value="0.5"/>
+
+    <!-- Fixed frame string -->
+    <param name="fixed_frame" value="map"/>
   </node>
 
   <!-- Graph construction node -->
@@ -63,7 +66,7 @@
 
     <!-- Parameters -->
     <!-- You'll have to talk to Shakeeb -->
-    <param name="sRadius" value="3.0"/>
+    <param name="sRadius" value="2.0"/>
     <param name="rRadius" value="3.0"/>
     <param name="eRadius" value="0.7"/>
     <param name="dRadius" value="0.25"/>

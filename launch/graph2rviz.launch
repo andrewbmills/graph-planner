@@ -11,6 +11,6 @@
 
     <!-- Parameters -->
     <param name="rate" value="5.0"/>
-    <param name="fixed_frame" value="world"/>
+    <param name="fixed_frame" value="map"/>
   </node>
 </launch>
