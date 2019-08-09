@@ -3,7 +3,7 @@
   <!-- Map to Graph Node -->
   <node pkg="graph-planner" type="map2graph_full.py" name="map2graph" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
-    <remap from="odometry" to="/H02/odometry"/> 
+    <!-- <remap from="odometry" to="odometry"/> -->
     <!-- <remap from="odometry" to="/X1/odometry"/> -->
 
     <!-- Map data in a PointCloud2 msg.  Either an ESDF or Occupancy grid message -->
@@ -31,7 +31,7 @@
     <param name="plot_steps" value="0"/>
 
     <!-- Gaussian kernel parameters for blurring the 2D occupancy grid -->
-    <param name="map_blur" value="3.0"/>
+    <param name="map_blur" value="5.0"/>
     <param name="map_threshold" value="0.5"/>
 
     <!-- Seen vs Unseen filter instead of occGrid -->
@@ -47,7 +47,7 @@
     <!-- Graph fence -->
     <!-- Only considers x positions greater than this threshold -->
     
-    <param name="x_entrance_filter" value="-1.0`"/>
+    <param name="x_entrance_filter" value="-1.0"/>
 
     <!-- Short unseen edge filter -->
     <!-- Unseen edges shorter than this length will be considered explored -->
@@ -106,7 +106,13 @@
 
     <!-- Radius for detecting whether or not the robot is at a node -->
     <param name="node_radius" value="3.0"/>
+
+    <!-- Turn biasing -->
+    <param name="turn_biasing" value="false"/>
+    <param name="turn_goal_x" value="0.0"/>
+    <param name="turn_goal_y" value="0.0"/>
    </node>
 
    <!-- <include file="$(find graph-planner)/launch/centering.launch"/> -->
+   <!-- <include file="$(find graph-planner)/launch/junction_switch.launch"/> -->
 </launch>
