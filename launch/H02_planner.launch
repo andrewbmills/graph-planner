@@ -3,7 +3,7 @@
   <!-- Map to Graph Node -->
   <node pkg="graph-planner" type="map2graph.py" name="map2graph" output="screen">
     <!-- Inputs (Subscribed Topic Names) -->
-    <remap from="odometry" to="odometry"/>
+    <remap from="odometry" to="odometry_map"/>
     <!-- <remap from="odometry" to="/jackal_odom"/> -->
     <!-- <remap from="odometry" to="/H02/odometry"/> -->
 
@@ -54,7 +54,7 @@
   <node name="gbm_node" pkg="gbm_pkg" type="gbm_node"  output="screen">
     <!-- Odom -->
     <!-- <remap from="odometry" to="/H02/odometry"/> -->
-    <remap from="odometry" to="odometry"/>
+    <remap from="odometry" to="odometry_map"/>
 
     <!-- Node skeleton output topics -->
     <remap from="closest_node" to="node_skeleton/closest_node"/>

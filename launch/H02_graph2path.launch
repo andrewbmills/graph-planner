@@ -7,7 +7,7 @@
 
     <!-- Odometry msg -->
     <!-- <remap from="odometry" to="/jackal_odom"/> -->
-    <remap from="odometry" to="odometry"/>
+    <remap from="odometry" to="odometry_map"/>
 
     <!-- Set to "Explore" by default.  "Explore" goes to the nearest unexplored edge in the graph.  "Home" goes back to node 0. -->
     <!-- <remap from="task" to="/X1/task"/> -->
