@@ -46,7 +46,7 @@
 
     <!-- Graph fence -->
     <!-- Only considers x positions less than this threshold (-x is into the tunnel) -->
-    <param name="x_entrance_filter" value="-2.0"/>
+    <param name="x_entrance_filter" value="5.0"/>
 
     <!-- Short unseen edge filter -->
     <!-- Unseen edges shorter than this length will be considered explored -->

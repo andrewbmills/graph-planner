@@ -284,16 +284,16 @@ class node_skeleton:
 
 		# Get rid of all data behind the entrance to the tunnel
 		entrance_x_index = int(round((self.x_entrance - x_min)/self.voxel_size))
-		if (entrance_x_index < x_size):
-			img = np.copy(img[0:entrance_x_index, :])
+		# if (entrance_x_index < x_size):
+			# img = np.copy(img[0:entrance_x_index, :])
 			# x_min = self.x_entrance
-			x_size, _ = np.shape(img)
+			# x_size, _ = np.shape(img)
 
 		#### If we fix the cartographer map frame 180 issues ####
-		# if (entrance_x_index > 0):
-		# 	img = np.copy(img[entrance_x_index:, :])
-		# 	x_min = self.x_entrance
-		# 	x_size, _ = np.shape(img)
+		if (entrance_x_index > 0):
+			img = np.copy(img[entrance_x_index:, :])
+			x_min = self.x_entrance
+			x_size, _ = np.shape(img)
 
 		# Pad img with self.img_pad worth of unseen pixels
 		img = np.pad(img, self.img_pad, 'constant', constant_values=((-1,-1),(-1,-1)))
