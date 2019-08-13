@@ -5,6 +5,7 @@
     <!-- Inputs (Subscribed Topic Names) -->
     <remap from="odometry" to="odometry_map"/>
     <!-- <remap from="odometry" to="/X1/odometry"/> -->
+    <!-- <remap from="odometry" to="/H02/husky_odom"/> -->
 
     <!-- Map data in a PointCloud2 msg.  Either an ESDF or Occupancy grid message -->
     <!-- <remap from="pointcloud" to="/octomap_point_cloud_centers_free"/> -->
@@ -65,7 +66,7 @@
 
     <!-- Parameters -->
     <param name="rate" value="5.0"/>
-    <param name="fixed_frame" value="map"/>
+    <!-- <param name="fixed_frame" value="map"/> -->
   </node>
 
   <!-- Path planning node -->
@@ -75,7 +76,7 @@
     <!-- <remap from="graph" to="demo/node_skeleton/graph"/> -->
     <!-- Odometry msg -->
     <!-- <remap from="odometry" to="/jackal_odom"/> -->
-    <!-- <remap from="odometry" to="husky_odom"/> -->
+    <!-- <remap from="odometry" to="/H02/husky_odom"/> -->
     <remap from="odometry" to="odometry_map"/>
 
     <!-- Set to "Explore" by default.  "Explore" goes to the nearest unexplored edge in the graph.  "Home" goes back to node 0. -->
@@ -98,7 +99,7 @@
     <param name="rate" value="3.0"/>
 
     <!-- Fixed frame string -->
-    <!-- <param name="fixed_frame" value="world"/> -->
+    <!-- <param name="fixed_frame" value="map"/> -->
 
     <!-- Speed for node Twist command in m/s -->
     <!-- <param name="speed" value="1.0"/> -->

@@ -70,9 +70,16 @@ class graph2path:
 		n = data.size
 		Adj = np.zeros((n,n,2)) # Adjacency matrix (First nxn is costs and second one is angles)
 		self.unexplored_edges = [] # a (p x e+1) list of unexplored edges.  Column 1 is the node id and columns 2 to e+1 are the edge angles
+		self.current_node = 0
+		min_node_dist_squared = float("inf")
 		for node in data.node:
 			i = int(node.id)
 			self.node_position_list.append(node.position)
+			# Check if this node is the closest node to the robot's current odom
+			dist_2 = (self.position.x - node.position.x)**2 + (self.position.y - node.position.y)**2
+			if (dist_2 <= min_node_dist_squared):
+				min_node_dist_squared = dist_2
+				self.current_node = i
 			for edge_num in range(len(node.neighborId)):
 				j = node.neighborId[edge_num]
 				cost = node.edgeCost[edge_num]
@@ -87,7 +94,7 @@ class graph2path:
 			if node.nUnexploredEdge:
 				self.unexplored_edges.append([i, node.unexploredEdge])
 
-		self.current_node = data.currentNodeId
+		# self.current_node = data.currentNodeId
 		self.current_node_position.point = data.node[self.current_node].position
 		self.current_node_position.header.stamp = data.header.stamp
 
@@ -109,6 +116,8 @@ class graph2path:
 
 	def getTask(self, data):
 		self.task = str(data.data)
+		if (self.task == "Report"):
+			self.task = "Home"
 		return
 
 	def findPath(self):

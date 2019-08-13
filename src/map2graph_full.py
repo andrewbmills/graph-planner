@@ -271,15 +271,16 @@ class node_skeleton:
 
 	def occGrid2Img(self):
 		# Read size and origin parameters
-		x_min = self.occupancy_grid_msg.info.origin.position.x
-		y_min = self.occupancy_grid_msg.info.origin.position.y
-		x_size = self.occupancy_grid_msg.info.width
-		y_size = self.occupancy_grid_msg.info.height
-		q = self.occupancy_grid_msg.info.origin.orientation
+		occGrid_msg = self.occupancy_grid_msg
+		x_min = occGrid_msg.info.origin.position.x
+		y_min = occGrid_msg.info.origin.position.y
+		x_size = occGrid_msg.info.width
+		y_size = occGrid_msg.info.height
+		q = occGrid_msg.info.origin.orientation
 		yaw_origin = np.arctan2(2.0*(q.w*q.z + q.x*q.y), 1.0 - 2.0*(q.y*q.y + q.z*q.z))
 
 		# Read the map data
-		img = np.array(self.occupancy_grid_msg.data).reshape((self.occupancy_grid_msg.info.height, self.occupancy_grid_msg.info.width))
+		img = np.array(occGrid_msg.data).reshape((occGrid_msg.info.height, occGrid_msg.info.width))
 		img = np.transpose(img)
 
 		# Get rid of all data behind the entrance to the tunnel
