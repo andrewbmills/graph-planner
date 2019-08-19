@@ -83,10 +83,17 @@ class GraphSolver:
 			# Pick the minimum dist vertex 
 			# from the set of vertices 
 			# still in queue 
-			u = self.minDistance(dist,queue) 
+			u = self.minDistance(dist,queue)
 
-			# remove min element	 
-			queue.remove(u) 
+			# remove min element
+			# print(u)
+			try:
+				queue.remove(u)
+			except:
+				# print(dist)
+				# print(queue)
+				# queue.remove(u)
+				return parent, dist
 
 			# Update dist value and parent 
 			# index of the adjacent vertices of 
